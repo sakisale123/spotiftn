@@ -1,13 +1,19 @@
 # spotiftn
 
+PROCIRAJ SVE!
+Primer rasporeda rada projekta.
+Postuj verzije koje su dodeljenje u go.mod fajlu (za sada samo go kako budete dodajali i ostali clanovi da znaju da ubace).
+Procitajte sve izaberite koje cete funkcionalnosti raditi, ako mislite da nije dobro grupni poziv pa da napravimo novo.
+
+----------------------------------------------------------------------------------------------
 TEHNOLOGIJE: 
 
-Servisi: GO + Mux
-Baza: MongoDB
-API Gateway: NGINX
-Docker: Docker Compose
-Auth: JWT + bcrypt
-FrontEnd: React + Vite
+Servisi: GO + Mux,
+Baza: MongoDB,
+API Gateway: NGINX,
+Docker: Docker Compose,
+Auth: JWT + bcrypt,
+FrontEnd: React + Vite,
 
 
 -----------------------------------------------------------------------------------------------
