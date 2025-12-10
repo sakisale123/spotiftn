@@ -3,50 +3,103 @@ version: "3.9"
 services:
   users:
     build: ./services/users
+    container_name: users-service
     ports:
       - "8081:8081"
+    environment:
+      - SERVER_ADDRESS=:8081
+      - MONGO_URI=mongodb://mongo:27017
+      - MONGO_DB_NAME=users_db
     depends_on:
       - mongo
+    networks:
+      - app-network
 
   content:
     build: ./services/content
+    container_name: content-service
     ports:
       - "8082:8082"
+    environment:
+      - SERVER_ADDRESS=:8082
+      - MONGO_URI=mongodb://mongo:27017
+      - MONGO_DB_NAME=content_db
     depends_on:
       - mongo
+    networks:
+      - app-network
 
   notifications:
     build: ./services/notifications
+    container_name: notification-service
     ports:
       - "8083:8083"
+    environment:
+      - SERVER_ADDRESS=:8083
+      - MONGO_URI=mongodb://mongo:27017
+      - MONGO_DB_NAME=notifications_db
     depends_on:
       - mongo
+    networks:
+      - app-network
 
   gateway:
     build: ./services/gateway
+    container_name: api-gateway
     ports:
       - "8080:8080"
     volumes:
-      - ./services/gateway/nginx.conf:/etc/nginx/nginx.conf
+      - ./services/gateway/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - users
       - content
       - notifications
+    networks:
+      - app-network
+  
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8080
+    depends_on:
+      - gateway
+    networks:
+      - app-network
 
   mongo:
-    image: mongo
+    image: mongo:5.0
     ports:
       - "27017:27017"
     restart: always
     container_name: mongo
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - app-network
 
   mongo-express:
     image: mongo-express
+    container_name: mongo-ui
     restart: always
     ports:
       - "8084:8081"
     environment:
       ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin1
     depends_on:
       - mongo
+    networks:
+      - app-network
+      
+networks:
+  app-network:
+    driver: bridge
 
+volumes:
+  mongo_data:
