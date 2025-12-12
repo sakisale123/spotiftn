@@ -4,9 +4,10 @@ go 1.23
 
 require go.mongodb.org/mongo-driver v1.13.1
 
-require github.com/go-chi/chi/v5 v5.2.3
+//require github.com/go-chi/chi/v5 v5.2.3
 
 require (
+
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect

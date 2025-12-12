@@ -24,8 +24,6 @@ func NewUsersRepository(db *mongo.Database) interfaces.UsersRepository {
 	}
 }
 
-// ---------- CREATE USER ----------
-
 func (r *usersRepository) CreateUser(ctx context.Context, user *models.User) error {
 	var existing models.User
 	err := r.collection.FindOne(ctx, bson.M{"email": user.Email}).Decode(&existing)
@@ -36,7 +34,6 @@ func (r *usersRepository) CreateUser(ctx context.Context, user *models.User) err
 		return err
 	}
 
-	// Hash password
 	hashed, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
