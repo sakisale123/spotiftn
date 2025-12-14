@@ -30,9 +30,13 @@ func main() {
 
 	port := os.Getenv("SERVER_ADDRESS")
 	if port == "" {
-		port = "8081"
+		port = ":8081"
 	}
-	addr := ":" + port
+	// Verify if port has : prefix
+	addr := port
+	if len(port) > 0 && port[0] != ':' {
+		addr = ":" + port
+	}
 
 	log.Printf("Content Service starting on port %s\n", addr)
 
