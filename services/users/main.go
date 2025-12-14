@@ -1,21 +1,34 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
+	"spotiftn/users/auth"
+	"spotiftn/users/handlers"
+	"spotiftn/users/repository"
+
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func main() {
-	port := os.Getenv("SERVER_ADDRESS")
-	if port == "" {
-		port = ":8081"
-	}
+	port := ":8081"
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello from Users Service! Connected to Mongo at %s", os.Getenv("MONGO_URI"))
-	})
+	// Mongo
+	client, _ := mongo.Connect(context.Background(), options.Client().ApplyURI(os.Getenv("MONGO_URI")))
+	db := client.Database("users")
 
-	fmt.Printf("Users service starting on port %s\n", port)
+	// DI
+	userRepo := repository.NewUsersRepository(db)
+	authService := auth.NewAuthService(userRepo)
+	authHandler := handlers.NewAuthHandler(authService)
+
+	// Routes
+	http.HandleFunc("/register", authHandler.Register)
+	http.HandleFunc("/login", authHandler.Login)
+
+	fmt.Println("Users service running on", port)
 	http.ListenAndServe(port, nil)
 }
