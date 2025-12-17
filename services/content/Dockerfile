@@ -1,11 +1,7 @@
 FROM golang:1.23-alpine AS builder
 WORKDIR /app
 COPY go.mod ./
-<<<<<<< HEAD
-# COPY go.sum ./  <-- Otkomentarisi ovo kad budes imao go.sum
-=======
 COPY go.sum ./
->>>>>>> main
 RUN go mod download
 COPY . .
 RUN go build -o main .

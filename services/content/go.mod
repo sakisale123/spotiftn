@@ -1,8 +1,5 @@
 module spotiftn/content
 
-<<<<<<< HEAD
-go 1.23
-=======
 go 1.23
 
 require (
@@ -22,4 +19,3 @@ require (
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
 )
->>>>>>> main
