@@ -1,4 +1,6 @@
 package main
+<<<<<<< HEAD
+=======
 
 import (
 	"net/http"
@@ -13,3 +15,4 @@ func RegisterRoutes(
 	mux.HandleFunc("/register", authHandler.Register)
 	mux.HandleFunc("/login", authHandler.Login)
 }
+>>>>>>> main
