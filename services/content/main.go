@@ -34,6 +34,13 @@ func main() {
 	}
 
 	addr := port
+		port = ":8081"
+	}
+	// Verify if port has : prefix
+	addr := port
+	if len(port) > 0 && port[0] != ':' {
+		addr = ":" + port
+	}
 
 	log.Printf("Content Service starting on port %s\n", addr)
 
