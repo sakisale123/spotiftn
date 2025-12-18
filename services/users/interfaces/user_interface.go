@@ -14,4 +14,5 @@ type UsersRepository interface {
 	GetUserByID(ctx context.Context, id primitive.ObjectID) (*models.User, error)
 	UpdateUser(ctx context.Context, user *models.User) error
 	GetUserByResetToken(ctx context.Context, token string) (*models.User, error)
+	GetUserByActivationToken(ctx context.Context, token string) (*models.User, error)
 }

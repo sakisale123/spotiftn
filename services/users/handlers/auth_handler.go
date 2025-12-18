@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"spotiftn/users/interfaces"
@@ -34,7 +35,11 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) ConfirmEmail(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("🔥 CONFIRM ENDPOINT HIT")
+
 	token := r.URL.Query().Get("token")
+	fmt.Println("🔥 TOKEN RECEIVED:", token)
+
 	if token == "" {
 		http.Error(w, "missing token", http.StatusBadRequest)
 		return

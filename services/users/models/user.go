@@ -18,6 +18,8 @@ type User struct {
 
 	CreatedAt time.Time `bson:"createdAt"`
 
+	ActivationExpires time.Time `bson:"activationExpires" json:"activationExpires"`
+
 	// Password security
 	PasswordChangedAt time.Time `bson:"passwordChangedAt"`
 	PasswordExpiresAt time.Time `bson:"passwordExpiresAt"`

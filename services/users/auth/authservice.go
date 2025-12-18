@@ -3,7 +3,11 @@ package auth
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
+
+	"crypto/rand"
+	"encoding/hex"
 
 	"github.com/google/uuid"
 
@@ -14,6 +18,15 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 )
+
+func generateToken() string {
+	b := make([]byte, 32) // 256-bit token
+	_, err := rand.Read(b)
+	if err != nil {
+		panic(err)
+	}
+	return hex.EncodeToString(b)
+}
 
 type authService struct {
 	userRepo interfaces.UsersRepository
@@ -37,31 +50,44 @@ func (s *authService) Register(ctx context.Context, req *models.RegisterRequest)
 		return err
 	}
 
+	activationToken := generateToken() // random string
+
 	user := &models.User{
 		Name:              req.Name,
 		Email:             req.Email,
 		Password:          string(hashed),
 		IsActive:          false,
+		ActivationToken:   activationToken,
+		ActivationExpires: time.Now().Add(24 * time.Hour),
 		PasswordChangedAt: time.Now(),
-		PasswordExpiresAt: time.Now().Add(60 * 24 * time.Hour),
-		ActivationToken:   "activation-token", // simulacija
-		ActivationExp:     time.Now().Add(24 * time.Hour),
+		PasswordExpiresAt: time.Now().Add(60 * 24 * time.Hour), // 60 dana
+		CreatedAt:         time.Now(),
 	}
+
+	// 🔴 KLJUČNO: vidi token u logu (simulacija emaila)
+	fmt.Println("ACTIVATION LINK:")
+	fmt.Println("http://localhost:8081/auth/confirm?token=" + activationToken)
 
 	return s.userRepo.CreateUser(ctx, user)
 }
 
 // ===== EMAIL CONFIRM =====
-
 func (s *authService) ConfirmEmail(ctx context.Context, token string) error {
-	// učitaj korisnika po tokenu (pojednostavljeno)
-	user, err := s.userRepo.GetUserByEmail(ctx, "") // u praksi bi imao posebnu metodu
+	fmt.Println("🧠 SERVICE: confirming token =", token)
+
+	user, err := s.userRepo.GetUserByActivationToken(ctx, token)
 	if err != nil {
-		return err
+		return errors.New("invalid or expired activation token")
+	}
+
+	if time.Now().After(user.ActivationExpires) {
+		return errors.New("activation token expired")
 	}
 
 	user.IsActive = true
 	user.ActivationToken = ""
+	user.ActivationExpires = time.Time{}
+
 	return s.userRepo.UpdateUser(ctx, user)
 }
 

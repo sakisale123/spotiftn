@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -18,6 +19,8 @@ type usersRepository struct {
 }
 
 func NewUsersRepository(db *mongo.Database) interfaces.UsersRepository {
+	fmt.Println("🧠 REPO USING DB:", db.Name())
+
 	return &usersRepository{
 		collection: db.Collection("users"),
 	}
@@ -66,13 +69,41 @@ func (r *usersRepository) GetUserByID(ctx context.Context, id primitive.ObjectID
 // ===== GENERIC UPDATE =====
 //
 
-func (r *usersRepository) UpdateUser(ctx context.Context, user *models.User) error {
-	_, err := r.collection.UpdateByID(
-		ctx,
-		user.ID,
-		bson.M{"$set": user},
+func (r *usersRepository) UpdateUser(
+	ctx context.Context,
+	user *models.User,
+) error {
+
+	fmt.Println(
+		"🟢 REPO UPDATE:",
+		"isActive =", user.IsActive,
+		"activationToken =", user.ActivationToken,
+		"activationExpires =", user.ActivationExpires,
 	)
-	return err
+
+	update := bson.M{
+		"$set": bson.M{
+			"isActive":          user.IsActive,
+			"activationToken":   user.ActivationToken,
+			"activationExpires": user.ActivationExpires,
+			"password":          user.Password,
+			"passwordChangedAt": user.PasswordChangedAt,
+			"passwordExpiresAt": user.PasswordExpiresAt,
+		},
+	}
+
+	res, err := r.collection.UpdateByID(ctx, user.ID, update)
+	if err != nil {
+		return err
+	}
+
+	if res.MatchedCount == 0 {
+		return errors.New("no user matched for update")
+	}
+
+	fmt.Println("🟢 REPO UPDATE OK, modified:", res.ModifiedCount)
+
+	return nil
 }
 
 func (r *usersRepository) GetUserByResetToken(
@@ -86,6 +117,25 @@ func (r *usersRepository) GetUserByResetToken(
 	}).Decode(&user)
 
 	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+func (r *usersRepository) GetUserByActivationToken(
+	ctx context.Context,
+	token string,
+) (*models.User, error) {
+
+	fmt.Println("🔎 REPO QUERY TOKEN =", token)
+
+	var user models.User
+	err := r.collection.FindOne(ctx, bson.M{
+		"activationToken": token,
+	}).Decode(&user)
+
+	if err != nil {
+		fmt.Println("❌ REPO FIND ERROR:", err)
 		return nil, err
 	}
 
