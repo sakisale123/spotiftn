@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"spotiftn/users/interfaces"
@@ -20,15 +21,12 @@ func NewAuthHandler(authService interfaces.AuthService) *AuthHandler {
 
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req models.RegisterRequest
-
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request", http.StatusBadRequest)
 		return
 	}
 
-	err = h.authService.Register(r.Context(), &req)
-	if err != nil {
+	if err := h.authService.Register(r.Context(), &req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -36,16 +34,48 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
-func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-	var req models.LoginRequest
+func (h *AuthHandler) ConfirmEmail(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("🔥 CONFIRM ENDPOINT HIT")
 
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+	token := r.URL.Query().Get("token")
+	fmt.Println("🔥 TOKEN RECEIVED:", token)
+
+	if token == "" {
+		http.Error(w, "missing token", http.StatusBadRequest)
 		return
 	}
 
-	token, err := h.authService.Login(r.Context(), &req)
+	if err := h.authService.ConfirmEmail(r.Context(), token); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
+	var req models.LoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.authService.LoginStep1(r.Context(), &req); err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK) // OTP sent
+}
+
+func (h *AuthHandler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
+	var req models.OTPVerifyRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request", http.StatusBadRequest)
+		return
+	}
+
+	token, err := h.authService.VerifyOTP(r.Context(), &req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
@@ -54,4 +84,9 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{
 		"token": token,
 	})
+}
+
+func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	h.authService.Logout(r.Context(), r.Header.Get("Authorization"))
+	w.WriteHeader(http.StatusOK)
 }
