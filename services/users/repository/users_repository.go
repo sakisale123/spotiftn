@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -44,6 +45,9 @@ func (r *usersRepository) CreateUser(ctx context.Context, user *models.User) err
 	user.CreatedAt = time.Now()
 
 	_, err = r.collection.InsertOne(ctx, user)
+	log.Println("📦 USING DB:", r.collection.Database().Name())
+	log.Println("📁 USING COLLECTION:", r.collection.Name())
+
 	return err
 }
 
@@ -89,6 +93,8 @@ func (r *usersRepository) UpdateUser(
 			"password":          user.Password,
 			"passwordChangedAt": user.PasswordChangedAt,
 			"passwordExpiresAt": user.PasswordExpiresAt,
+			"otp":               user.OTP,
+			"otpExpires":        user.OTPExpires,
 		},
 	}
 

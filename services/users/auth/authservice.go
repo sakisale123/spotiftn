@@ -2,11 +2,13 @@ package auth
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
 	"fmt"
+	"log"
+	mathrand "math/rand"
 	"time"
 
-	"crypto/rand"
 	"encoding/hex"
 
 	"github.com/google/uuid"
@@ -20,12 +22,16 @@ import (
 )
 
 func generateToken() string {
-	b := make([]byte, 32) // 256-bit token
+	b := make([]byte, 32)
 	_, err := rand.Read(b)
 	if err != nil {
 		panic(err)
 	}
 	return hex.EncodeToString(b)
+}
+
+func generateOTP() string {
+	return fmt.Sprintf("%06d", mathrand.Intn(1000000))
 }
 
 type authService struct {
@@ -38,8 +44,6 @@ func NewAuthService(userRepo interfaces.UsersRepository) interfaces.AuthService 
 	}
 }
 
-// ===== REGISTER =====
-
 func (s *authService) Register(ctx context.Context, req *models.RegisterRequest) error {
 	if req.Password != req.ConfirmPassword {
 		return errors.New("passwords do not match")
@@ -50,7 +54,7 @@ func (s *authService) Register(ctx context.Context, req *models.RegisterRequest)
 		return err
 	}
 
-	activationToken := generateToken() // random string
+	activationToken := generateToken()
 
 	user := &models.User{
 		Name:              req.Name,
@@ -60,18 +64,23 @@ func (s *authService) Register(ctx context.Context, req *models.RegisterRequest)
 		ActivationToken:   activationToken,
 		ActivationExpires: time.Now().Add(24 * time.Hour),
 		PasswordChangedAt: time.Now(),
-		PasswordExpiresAt: time.Now().Add(60 * 24 * time.Hour), // 60 dana
+		PasswordExpiresAt: time.Now().Add(60 * 24 * time.Hour),
 		CreatedAt:         time.Now(),
 	}
 
-	// 🔴 KLJUČNO: vidi token u logu (simulacija emaila)
-	fmt.Println("ACTIVATION LINK:")
-	fmt.Println("http://localhost:8081/auth/confirm?token=" + activationToken)
+	err = s.userRepo.CreateUser(ctx, user)
+	if err != nil {
+		return err
+	}
 
-	return s.userRepo.CreateUser(ctx, user)
+	log.Println("✅ REGISTER – TOKEN SAVED IN DB:", user.ActivationToken)
+
+	log.Println("📩 ACTIVATION LINK:")
+	log.Println("http://localhost:8081/auth/confirm?token=" + activationToken)
+	return nil
+
 }
 
-// ===== EMAIL CONFIRM =====
 func (s *authService) ConfirmEmail(ctx context.Context, token string) error {
 	fmt.Println("🧠 SERVICE: confirming token =", token)
 
@@ -91,8 +100,6 @@ func (s *authService) ConfirmEmail(ctx context.Context, token string) error {
 	return s.userRepo.UpdateUser(ctx, user)
 }
 
-// ===== LOGIN STEP 1 =====
-
 func (s *authService) LoginStep1(ctx context.Context, req *models.LoginRequest) error {
 	user, err := s.userRepo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
@@ -110,14 +117,15 @@ func (s *authService) LoginStep1(ctx context.Context, req *models.LoginRequest) 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
 		return errors.New("invalid credentials")
 	}
+	otp := generateOTP()
 
-	user.OTP = "123456" // simulacija
+	user.OTP = otp
 	user.OTPExpires = time.Now().Add(5 * time.Minute)
+
+	log.Println("🔐 OTP GENERATED:", otp)
 
 	return s.userRepo.UpdateUser(ctx, user)
 }
-
-// ===== LOGIN STEP 2 =====
 
 func (s *authService) VerifyOTP(ctx context.Context, req *models.OTPVerifyRequest) (string, error) {
 	user, err := s.userRepo.GetUserByEmail(ctx, req.Email)
@@ -136,33 +144,50 @@ func (s *authService) VerifyOTP(ctx context.Context, req *models.OTPVerifyReques
 	return jwt.GenerateJWT(user.ID.Hex())
 }
 
-// ===== CHANGE PASSWORD =====
-
 func (s *authService) ChangePassword(ctx context.Context, req *models.ChangePasswordRequest) error {
+	// 1. Parse user ID
 	id, err := primitive.ObjectIDFromHex(req.UserID)
 	if err != nil {
 		return errors.New("invalid user id")
 	}
 
+	// 2. Get user
 	user, err := s.userRepo.GetUserByID(ctx, id)
+	if err != nil {
+		return errors.New("user not found")
+	}
+
+	// 3. Verify old password
+	if err := bcrypt.CompareHashAndPassword(
+		[]byte(user.Password),
+		[]byte(req.OldPassword),
+	); err != nil {
+		return errors.New("old password is incorrect")
+	}
+
+	// 4. Enforce 1-day rule
+	if !user.PasswordChangedAt.IsZero() &&
+		time.Since(user.PasswordChangedAt) < 24*time.Hour {
+		return errors.New("password can be changed only once per day")
+	}
+
+	// 5. Hash new password
+	hashed, err := bcrypt.GenerateFromPassword(
+		[]byte(req.NewPassword),
+		bcrypt.DefaultCost,
+	)
 	if err != nil {
 		return err
 	}
 
-	if time.Since(user.PasswordChangedAt) < 24*time.Hour {
-		return errors.New("password can be changed only once per day")
-	}
-
-	hashed, _ := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
-
+	// 6. Update fields
 	user.Password = string(hashed)
 	user.PasswordChangedAt = time.Now()
 	user.PasswordExpiresAt = time.Now().Add(60 * 24 * time.Hour)
 
+	// 7. Save
 	return s.userRepo.UpdateUser(ctx, user)
 }
-
-// ===== FORGOT PASSWORD =====
 
 func (s *authService) ForgotPassword(ctx context.Context, email string) {
 	user, err := s.userRepo.GetUserByEmail(ctx, email)
@@ -175,8 +200,6 @@ func (s *authService) ForgotPassword(ctx context.Context, email string) {
 
 	_ = s.userRepo.UpdateUser(ctx, user)
 }
-
-// ===== RESET PASSWORD =====
 
 func (s *authService) ResetPassword(ctx context.Context, req *models.ResetPasswordRequest) error {
 	user, err := s.userRepo.GetUserByResetToken(ctx, req.Token)
@@ -198,8 +221,6 @@ func (s *authService) ResetPassword(ctx context.Context, req *models.ResetPasswo
 
 	return s.userRepo.UpdateUser(ctx, user)
 }
-
-// ===== LOGOUT =====
 
 func (s *authService) Logout(ctx context.Context, token string) {
 	// noop / blacklist (nije obavezno za zadatak)

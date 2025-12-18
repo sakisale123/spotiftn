@@ -90,3 +90,29 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	h.authService.Logout(r.Context(), r.Header.Get("Authorization"))
 	w.WriteHeader(http.StatusOK)
 }
+
+func (h *AuthHandler) ChangePassword(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req models.ChangePasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.UserID == "" || req.OldPassword == "" || req.NewPassword == "" {
+		http.Error(w, "missing fields", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.authService.ChangePassword(r.Context(), &req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("password changed successfully"))
+}
