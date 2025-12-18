@@ -1,0 +1,16 @@
+func (r *usersRepository) GetUserByResetToken(
+	ctx context.Context,
+	token string,
+) (*models.User, error) {
+
+	var user models.User
+	err := r.collection.FindOne(ctx, bson.M{
+		"resetToken": token,
+	}).Decode(&user)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}

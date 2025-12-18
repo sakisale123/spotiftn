@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"errors"
 	"os"
 	"time"
 
@@ -9,6 +10,9 @@ import (
 
 func GenerateJWT(userID string) (string, error) {
 	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		return "", errors.New("JWT_SECRET not set")
+	}
 
 	claims := jwt.MapClaims{
 		"userId": userID,

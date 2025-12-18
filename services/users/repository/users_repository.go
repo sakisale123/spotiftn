@@ -8,7 +8,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"golang.org/x/crypto/bcrypt"
 
 	"spotiftn/users/interfaces"
 	"spotiftn/users/models"
@@ -24,6 +23,10 @@ func NewUsersRepository(db *mongo.Database) interfaces.UsersRepository {
 	}
 }
 
+//
+// ===== BASIC USER =====
+//
+
 func (r *usersRepository) CreateUser(ctx context.Context, user *models.User) error {
 	var existing models.User
 	err := r.collection.FindOne(ctx, bson.M{"email": user.Email}).Decode(&existing)
@@ -33,12 +36,6 @@ func (r *usersRepository) CreateUser(ctx context.Context, user *models.User) err
 	if err != mongo.ErrNoDocuments {
 		return err
 	}
-
-	hashed, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return err
-	}
-	user.Password = string(hashed)
 
 	user.ID = primitive.NewObjectID()
 	user.CreatedAt = time.Now()
@@ -62,5 +59,35 @@ func (r *usersRepository) GetUserByID(ctx context.Context, id primitive.ObjectID
 	if err != nil {
 		return nil, err
 	}
+	return &user, nil
+}
+
+//
+// ===== GENERIC UPDATE =====
+//
+
+func (r *usersRepository) UpdateUser(ctx context.Context, user *models.User) error {
+	_, err := r.collection.UpdateByID(
+		ctx,
+		user.ID,
+		bson.M{"$set": user},
+	)
+	return err
+}
+
+func (r *usersRepository) GetUserByResetToken(
+	ctx context.Context,
+	token string,
+) (*models.User, error) {
+
+	var user models.User
+	err := r.collection.FindOne(ctx, bson.M{
+		"resetToken": token,
+	}).Decode(&user)
+
+	if err != nil {
+		return nil, err
+	}
+
 	return &user, nil
 }
