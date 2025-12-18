@@ -33,11 +33,11 @@ const LoginPage = () => {
             });
 
             // Store token (basic implementation for now)
+            // Store token
             if (response.data.token) {
                 localStorage.setItem('token', response.data.token);
-                // Redirect to home or dashboard
-                // navigate('/'); 
-                alert("Login uspesan! Token sacuvan."); // Temporary feedback
+                // Redirect to artists page
+                navigate('/artists', { replace: true });
             }
 
         } catch (err) {

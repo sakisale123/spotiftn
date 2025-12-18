@@ -1,0 +1,72 @@
+.page-container {
+    min-height: 100vh;
+    background-color: #121212;
+    color: white;
+}
+
+.content-wrap {
+    padding: 2rem;
+}
+
+.artist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.artist-card {
+    background-color: #181818;
+    padding: 1.5rem;
+    border-radius: 8px;
+    text-align: center;
+    transition: background-color 0.3s;
+    cursor: pointer;
+}
+
+.artist-card:hover {
+    background-color: #282828;
+}
+
+.artist-placeholder {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    background-color: #333;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.error-msg {
+    color: #e74c3c;
+    background: rgba(231, 76, 60, 0.1);
+    padding: 1rem;
+    border-radius: 5px;
+}
+
+/* Mobile Responsiveness */
+@media screen and (max-width: 480px) {
+    .content-wrap {
+        padding: 1rem;
+    }
+
+    .artist-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+    }
+
+    .artist-card {
+        padding: 1rem;
+    }
+
+    .artist-placeholder {
+        width: 80px;
+        height: 80px;
+        font-size: 2.5rem;
+    }
+}
