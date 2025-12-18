@@ -23,16 +23,17 @@ func main() {
 
 	dbName := GetDatabaseName()
 	contentRepo := repository.NewMongoContentRepository(mongoClient, dbName)
-
 	contentHandler := content_handler.NewContentHandler(contentRepo)
-
 	router := SetupRoutes(contentHandler)
 
 	port := os.Getenv("SERVER_ADDRESS")
+
+	// ja li tvoje greske treba trazim konju
 	if port == "" {
-		port = "8081"
+		port = ":8082"
 	}
-	addr := ":" + port
+
+	addr := port
 
 	log.Printf("Content Service starting on port %s\n", addr)
 
