@@ -2,13 +2,17 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"time"
 
 	"spotiftn/content/content_handler"
+	"spotiftn/content/events"
 	"spotiftn/content/repository"
+
+	"github.com/nats-io/nats.go"
 )
 
 func main() {
@@ -24,7 +28,21 @@ func main() {
 	dbName := GetDatabaseName()
 	contentRepo := repository.NewMongoContentRepository(mongoClient, dbName)
 
-	contentHandler := content_handler.NewContentHandler(contentRepo)
+	// NATS
+	natsURL := os.Getenv("NATS_URL")
+	if natsURL == "" {
+		natsURL = nats.DefaultURL
+	}
+	publisher, err := events.NewNatsEventPublisher(natsURL)
+	if err != nil {
+		fmt.Printf("Error connecting to NATS: %v\n", err)
+		// Assuming we continue without events for now, or could panic
+	} else {
+		defer publisher.Close()
+		fmt.Println("Connected to NATS at", natsURL)
+	}
+
+	contentHandler := content_handler.NewContentHandler(contentRepo, publisher)
 
 	router := SetupRoutes(contentHandler)
 

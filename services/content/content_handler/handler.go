@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"time"
 
+	"spotiftn/content/events"
 	"spotiftn/content/models"
 	"spotiftn/content/repository"
 
@@ -13,12 +15,14 @@ import (
 )
 
 type ContentHandler struct {
-	Repo repository.ContentRepository
+	Repo      repository.ContentRepository
+	Publisher events.EventPublisher
 }
 
-func NewContentHandler(repo repository.ContentRepository) *ContentHandler {
+func NewContentHandler(repo repository.ContentRepository, publisher events.EventPublisher) *ContentHandler {
 	return &ContentHandler{
-		Repo: repo,
+		Repo:      repo,
+		Publisher: publisher,
 	}
 }
 
@@ -38,6 +42,17 @@ func (h *ContentHandler) CreateArtist(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "Database error: Failed to create artist", http.StatusInternalServerError)
 		return
+	}
+
+	// Publish Event
+	if h.Publisher != nil {
+		event := events.ArtistCreatedEvent{
+			ID:        createdArtist.ID.Hex(),
+			Name:      createdArtist.Name,
+			Genres:    createdArtist.Genres,
+			Timestamp: time.Now(),
+		}
+		h.Publisher.Publish(events.SubjectArtistCreated, event)
 	}
 
 	w.WriteHeader(http.StatusCreated)
@@ -68,6 +83,17 @@ func (h *ContentHandler) UpdateArtist(w http.ResponseWriter, r *http.Request) {
 		}
 		http.Error(w, "Database error: Failed to update artist", http.StatusInternalServerError)
 		return
+	}
+
+	// Publish Event
+	if h.Publisher != nil {
+		event := events.ArtistUpdatedEvent{
+			ID:        id,
+			Name:      updateArtist.Name,
+			Genres:    updateArtist.Genres,
+			Timestamp: time.Now(),
+		}
+		h.Publisher.Publish(events.SubjectArtistUpdated, event)
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -109,6 +135,11 @@ func (h *ContentHandler) CreateAlbum(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if album.Title == "" {
+		http.Error(w, "Album title is required", http.StatusBadRequest)
+		return
+	}
+
 	if len(album.ArtistIDs) == 0 {
 		http.Error(w, "Album must be associated with at least one artist", http.StatusBadRequest)
 		return
@@ -118,6 +149,21 @@ func (h *ContentHandler) CreateAlbum(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "Database error: Failed to create album", http.StatusInternalServerError)
 		return
+	}
+
+	// Publish Event
+	if h.Publisher != nil {
+		artistIDs := make([]string, len(createdAlbum.ArtistIDs))
+		for i, aid := range createdAlbum.ArtistIDs {
+			artistIDs[i] = aid.Hex()
+		}
+		event := events.AlbumCreatedEvent{
+			ID:        createdAlbum.ID.Hex(),
+			Title:     createdAlbum.Title,
+			ArtistIDs: artistIDs,
+			Timestamp: time.Now(),
+		}
+		h.Publisher.Publish(events.SubjectAlbumCreated, event)
 	}
 
 	w.WriteHeader(http.StatusCreated)
@@ -142,10 +188,30 @@ func (h *ContentHandler) GetAlbumByID(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(album)
 }
 
+func (h *ContentHandler) GetAllAlbums(w http.ResponseWriter, r *http.Request) {
+	albums, err := h.Repo.GetAllAlbums(r.Context())
+	if err != nil {
+		http.Error(w, "Database error: Failed to fetch albums", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(albums)
+}
+
 func (h *ContentHandler) CreateSong(w http.ResponseWriter, r *http.Request) {
 	var song models.Song
 	if err := json.NewDecoder(r.Body).Decode(&song); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if song.Title == "" {
+		http.Error(w, "Song title is required", http.StatusBadRequest)
+		return
+	}
+	if song.Duration <= 0 {
+		http.Error(w, "Song duration must be positive", http.StatusBadRequest)
 		return
 	}
 
@@ -169,6 +235,22 @@ func (h *ContentHandler) CreateSong(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Publish Event
+	if h.Publisher != nil {
+		artistIDs := make([]string, len(createdSong.ArtistIDs))
+		for i, aid := range createdSong.ArtistIDs {
+			artistIDs[i] = aid.Hex()
+		}
+		event := events.SongCreatedEvent{
+			ID:        createdSong.ID.Hex(),
+			Title:     createdSong.Title,
+			AlbumID:   createdSong.AlbumID.Hex(),
+			ArtistIDs: artistIDs,
+			Timestamp: time.Now(),
+		}
+		h.Publisher.Publish(events.SubjectSongCreated, event)
+	}
+
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(createdSong)
 }
@@ -185,4 +267,22 @@ func (h *ContentHandler) GetSongsByAlbumID(w http.ResponseWriter, r *http.Reques
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(songs)
+}
+
+func (h *ContentHandler) GetSongByID(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	song, err := h.Repo.GetSongByID(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, errors.New("song not found")) {
+			http.Error(w, "Song not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "Database error fetching song", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(song)
 }

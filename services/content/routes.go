@@ -21,7 +21,9 @@ func SetupRoutes(handler *content_handler.ContentHandler) *mux.Router {
 	router.HandleFunc("/artists", handler.GetAllArtists).Methods("GET")
 	router.HandleFunc("/artists/{id}", handler.GetArtistByID).Methods("GET")
 	router.HandleFunc("/albums/{id}", handler.GetAlbumByID).Methods("GET")
+	router.HandleFunc("/albums", handler.GetAllAlbums).Methods("GET") // [NEW]
 	router.HandleFunc("/albums/{id}/songs", handler.GetSongsByAlbumID).Methods("GET")
+	router.HandleFunc("/songs/{id}", handler.GetSongByID).Methods("GET") // [NEW]
 
 	return router
 }

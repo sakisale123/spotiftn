@@ -24,8 +24,10 @@ services:
       - SERVER_ADDRESS=:8082
       - MONGO_URI=mongodb://mongo:27017
       - MONGO_DB_NAME=content_db
+      - NATS_URL=nats://nats:4222
     depends_on:
       - mongo
+      - nats
     networks:
       - app-network
 
@@ -38,8 +40,19 @@ services:
       - SERVER_ADDRESS=:8083
       - MONGO_URI=mongodb://mongo:27017
       - MONGO_DB_NAME=notifications_db
+      - NATS_URL=nats://nats:4222
     depends_on:
       - mongo
+      - nats
+    networks:
+      - app-network
+
+  nats:
+    image: nats:latest
+    container_name: nats-service
+    ports:
+      - "4222:4222"
+      - "8222:8222"
     networks:
       - app-network
 
@@ -56,7 +69,7 @@ services:
       - notifications
     networks:
       - app-network
-  
+
   frontend:
     build: ./frontend
     ports:
@@ -96,7 +109,7 @@ services:
       - mongo
     networks:
       - app-network
-      
+
 networks:
   app-network:
     driver: bridge

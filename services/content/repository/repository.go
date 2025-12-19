@@ -23,6 +23,8 @@ type ContentRepository interface {
 
 	CreateSong(ctx context.Context, song *models.Song) (*models.Song, error)
 	GetSongsByAlbumID(ctx context.Context, albumID string) ([]*models.Song, error)
+	GetSongByID(ctx context.Context, id string) (*models.Song, error)
+	GetAllAlbums(ctx context.Context) ([]*models.Album, error)
 }
 
 type MongoContentRepository struct {
@@ -136,6 +138,21 @@ func (r *MongoContentRepository) GetAlbumByID(ctx context.Context, id string) (*
 	return &album, nil
 }
 
+func (r *MongoContentRepository) GetAllAlbums(ctx context.Context) ([]*models.Album, error) {
+	collection := r.Client.Database(r.Database).Collection("albums")
+	cursor, err := collection.Find(ctx, bson.M{})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var albums []*models.Album
+	if err := cursor.All(ctx, &albums); err != nil {
+		return nil, err
+	}
+	return albums, nil
+}
+
 func (r *MongoContentRepository) CreateSong(ctx context.Context, song *models.Song) (*models.Song, error) {
 	collection := r.Client.Database(r.Database).Collection("songs")
 	song.CreatedAt = time.Now()
@@ -166,4 +183,22 @@ func (r *MongoContentRepository) GetSongsByAlbumID(ctx context.Context, albumID 
 		return nil, err
 	}
 	return songs, nil
+}
+
+func (r *MongoContentRepository) GetSongByID(ctx context.Context, id string) (*models.Song, error) {
+	collection := r.Client.Database(r.Database).Collection("songs")
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	var song models.Song
+	err = collection.FindOne(ctx, bson.M{"_id": objID}).Decode(&song)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, errors.New("song not found")
+		}
+		return nil, err
+	}
+	return &song, nil
 }
