@@ -30,14 +30,11 @@ func GetNotifications(c *gin.Context) {
 	}
 	defer cursor.Close(ctx)
 
-	var notifications []models.Notification
+	notifications := make([]models.Notification, 0)
+
 	if err = cursor.All(ctx, &notifications); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Parsing error"})
 		return
-	}
-
-	if notifications == nil {
-		notifications = []models.Notification{}
 	}
 
 	c.JSON(http.StatusOK, notifications)
