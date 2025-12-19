@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import NavBar from '../NavBar/NavBar';
 import './Pages.css';
 
@@ -7,6 +8,7 @@ const ArtistPage = () => {
     const [artists, setArtists] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchArtists = async () => {
@@ -43,10 +45,10 @@ const ArtistPage = () => {
 
                 <div className="artist-grid">
                     {artists.map(artist => (
-                        <div key={artist.id} className="artist-card">
+                        <div key={artist.id} className="artist-card" onClick={() => navigate(`/artists/${artist.id}/albums`)}>
                             <div className="artist-placeholder">🎵</div>
                             <h3>{artist.name}</h3>
-                            <p>{artist.genre}</p>
+                            <p>{artist.genres && artist.genres.length > 0 ? artist.genres.join(', ') : 'N/A'}</p>
                         </div>
                     ))}
                     {!loading && artists.length === 0 && <p>No artists found.</p>}

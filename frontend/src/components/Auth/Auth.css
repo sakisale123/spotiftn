@@ -78,3 +78,8 @@ input:focus {
     cursor: pointer;
     text-decoration: underline;
 }
+.auth-box p {
+    color: #b3b3b3;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+}

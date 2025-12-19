@@ -38,7 +38,7 @@ const RegisterPage = () => {
         }
 
         // Provera jake lozinke: min 8, 1 velika, 1 mala, 1 broj, 1 specijalni karakter
-        const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
 
         if (!strongPasswordRegex.test(formData.password)) {
             setError("Lozinka mora imati bar 8 karaktera, jedno veliko slovo, jedno malo slovo, jedan broj i jedan specijalni karakter.");
@@ -50,15 +50,14 @@ const RegisterPage = () => {
             const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
             // Slanje na Users servis preko Gateway-a
-            const response = await axios.post(`${apiUrl}/api/users/register`, {
+            const response = await axios.post(`${apiUrl}/api/users/auth/register`, {
                 name: formData.name,
                 email: formData.email,
-                password: formData.password
+                password: formData.password,
+                confirmPassword: formData.confirmPassword
             });
 
-            setSuccess("Registracija uspešna! Možete se prijaviti.");
-            // Nakon 2 sekunde prebaci na login (kad ga napravimo)
-            setTimeout(() => navigate('/login'), 2000);
+            setSuccess("Registracija uspešna! Proverite email za aktivacioni link. (Za development: pogledajte konzolu backend servisa)");
 
         } catch (err) {
             // Prikaz detaljnije greške

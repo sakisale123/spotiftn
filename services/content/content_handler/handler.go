@@ -142,6 +142,20 @@ func (h *ContentHandler) GetAlbumByID(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(album)
 }
 
+func (h *ContentHandler) GetAlbumsByArtist(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	artistID := vars["id"]
+
+	albums, err := h.Repo.GetAlbumsByArtist(r.Context(), artistID)
+	if err != nil {
+		http.Error(w, "Database error fetching albums", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(albums)
+}
+
 func (h *ContentHandler) CreateSong(w http.ResponseWriter, r *http.Request) {
 	var song models.Song
 	if err := json.NewDecoder(r.Body).Decode(&song); err != nil {

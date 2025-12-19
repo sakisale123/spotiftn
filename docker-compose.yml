@@ -10,6 +10,7 @@ services:
       - SERVER_ADDRESS=:8081
       - MONGO_URI=mongodb://mongo:27017
       - MONGO_DB_NAME=users_db
+      - JWT_SECRET=supersecretkeyfortesting
     depends_on:
       - mongo
     networks:

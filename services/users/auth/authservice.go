@@ -56,7 +56,7 @@ func (s *authService) Register(ctx context.Context, req *models.RegisterRequest)
 		Name:              req.Name,
 		Email:             req.Email,
 		Password:          string(hashed),
-		IsActive:          false,
+		IsActive:          false, // Requires email activation
 		ActivationToken:   activationToken,
 		ActivationExpires: time.Now().Add(24 * time.Hour),
 		PasswordChangedAt: time.Now(),
@@ -66,7 +66,8 @@ func (s *authService) Register(ctx context.Context, req *models.RegisterRequest)
 
 	// 🔴 KLJUČNO: vidi token u logu (simulacija emaila)
 	fmt.Println("ACTIVATION LINK:")
-	fmt.Println("http://localhost:8081/auth/confirm?token=" + activationToken)
+	// Promenjeno da vodi na Frontend (port 3000) jer je to port koji je dozvoljen na Gateway-u (CORS)
+	fmt.Println("http://localhost:3000/activate?token=" + activationToken)
 
 	return s.userRepo.CreateUser(ctx, user)
 }
@@ -111,8 +112,24 @@ func (s *authService) LoginStep1(ctx context.Context, req *models.LoginRequest) 
 		return errors.New("invalid credentials")
 	}
 
-	user.OTP = "123456" // simulacija
-	user.OTPExpires = time.Now().Add(5 * time.Minute)
+	// Generisanje random 6-cifrenog koda
+	otpBytes := make([]byte, 6)
+	_, err = rand.Read(otpBytes)
+	if err != nil {
+		return err
+	}
+	// Mapiranje bajtova u cifre 0-9
+	otp := ""
+	for _, b := range otpBytes {
+		otp += fmt.Sprintf("%d", b%10)
+	}
+
+	user.OTP = otp
+	user.OTPExpires = time.Now().Add(24 * time.Hour)
+
+	fmt.Println("🔐 OTP GENERATED FOR:", user.Email)
+	fmt.Println("🔐 OTP CODE:", user.OTP)
+	fmt.Println("🔐 OTP EXPIRES:", user.OTPExpires)
 
 	return s.userRepo.UpdateUser(ctx, user)
 }

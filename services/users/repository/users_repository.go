@@ -89,6 +89,10 @@ func (r *usersRepository) UpdateUser(
 			"password":          user.Password,
 			"passwordChangedAt": user.PasswordChangedAt,
 			"passwordExpiresAt": user.PasswordExpiresAt,
+			"otp":               user.OTP,
+			"otpExpires":        user.OTPExpires,
+			"resetToken":        user.ResetToken,
+			"resetTokenExpires": user.ResetTokenExpires,
 		},
 	}
 
