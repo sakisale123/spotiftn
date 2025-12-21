@@ -286,3 +286,37 @@ func (h *ContentHandler) GetSongByID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(song)
 }
+
+func (h *ContentHandler) DeleteSong(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	err := h.Repo.DeleteSong(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, errors.New("song not found")) {
+			http.Error(w, "Song not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "Database error deleting song", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *ContentHandler) DeleteAlbum(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	err := h.Repo.DeleteAlbum(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, errors.New("album not found")) {
+			http.Error(w, "Album not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "Database error deleting album", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}

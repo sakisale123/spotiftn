@@ -48,14 +48,6 @@ func main() {
 
 	port := os.Getenv("SERVER_ADDRESS")
 
-	// ja li tvoje greske treba trazim konju
-	if port == "" {
-		port = ":8082"
-	}
-
-	addr := port
-		port = ":8081"
-	}
 	// Verify if port has : prefix
 	addr := port
 	if len(port) > 0 && port[0] != ':' {

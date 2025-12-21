@@ -25,6 +25,9 @@ func SetupRoutes(handler *content_handler.ContentHandler) *mux.Router {
 	router.HandleFunc("/albums/{id}/songs", handler.GetSongsByAlbumID).Methods("GET")
 	router.HandleFunc("/songs/{id}", handler.GetSongByID).Methods("GET") // [NEW]
 
+	router.HandleFunc("/songs/{id}", handler.DeleteSong).Methods("DELETE")
+	router.HandleFunc("/albums/{id}", handler.DeleteAlbum).Methods("DELETE")
+
 	return router
 }
 

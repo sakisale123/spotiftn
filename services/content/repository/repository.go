@@ -25,6 +25,8 @@ type ContentRepository interface {
 	GetSongsByAlbumID(ctx context.Context, albumID string) ([]*models.Song, error)
 	GetSongByID(ctx context.Context, id string) (*models.Song, error)
 	GetAllAlbums(ctx context.Context) ([]*models.Album, error)
+	DeleteSong(ctx context.Context, id string) error
+	DeleteAlbum(ctx context.Context, id string) error
 }
 
 type MongoContentRepository struct {
@@ -201,4 +203,38 @@ func (r *MongoContentRepository) GetSongByID(ctx context.Context, id string) (*m
 		return nil, err
 	}
 	return &song, nil
+}
+
+func (r *MongoContentRepository) DeleteSong(ctx context.Context, id string) error {
+	collection := r.Client.Database(r.Database).Collection("songs")
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+
+	result, err := collection.DeleteOne(ctx, bson.M{"_id": objID})
+	if err != nil {
+		return err
+	}
+	if result.DeletedCount == 0 {
+		return errors.New("song not found")
+	}
+	return nil
+}
+
+func (r *MongoContentRepository) DeleteAlbum(ctx context.Context, id string) error {
+	collection := r.Client.Database(r.Database).Collection("albums")
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+
+	result, err := collection.DeleteOne(ctx, bson.M{"_id": objID})
+	if err != nil {
+		return err
+	}
+	if result.DeletedCount == 0 {
+		return errors.New("album not found")
+	}
+	return nil
 }
