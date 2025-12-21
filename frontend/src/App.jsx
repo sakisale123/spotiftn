@@ -16,21 +16,16 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
-          {/* Ruta za registraciju */}
           <Route path="/register" element={<RegisterPage />} />
 
-          {/* Ruta za login */}
           <Route path="/login" element={<LoginPage />} />
 
-          {/* Auth rute */}
           <Route path="/activate" element={<ActivationPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-          {/* Ruta za pocetnu - preusmerava na registraciju za sada */}
           <Route path="/" element={<RegisterPage />} />
 
-          {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/artists" element={<ArtistPage />} />
             <Route path="/artists/:artistId/albums" element={<AlbumPage />} />

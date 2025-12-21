@@ -20,7 +20,7 @@ import (
 )
 
 func generateToken() string {
-	b := make([]byte, 32) // 256-bit token
+	b := make([]byte, 32)
 	_, err := rand.Read(b)
 	if err != nil {
 		panic(err)
@@ -38,8 +38,6 @@ func NewAuthService(userRepo interfaces.UsersRepository) interfaces.AuthService 
 	}
 }
 
-// ===== REGISTER =====
-
 func (s *authService) Register(ctx context.Context, req *models.RegisterRequest) error {
 	if req.Password != req.ConfirmPassword {
 		return errors.New("passwords do not match")
@@ -50,29 +48,26 @@ func (s *authService) Register(ctx context.Context, req *models.RegisterRequest)
 		return err
 	}
 
-	activationToken := generateToken() // random string
+	activationToken := generateToken()
 
 	user := &models.User{
 		Name:              req.Name,
 		Email:             req.Email,
 		Password:          string(hashed),
-		IsActive:          false, // Requires email activation
+		IsActive:          false,
 		ActivationToken:   activationToken,
 		ActivationExpires: time.Now().Add(24 * time.Hour),
 		PasswordChangedAt: time.Now(),
-		PasswordExpiresAt: time.Now().Add(60 * 24 * time.Hour), // 60 dana
+		PasswordExpiresAt: time.Now().Add(60 * 24 * time.Hour),
 		CreatedAt:         time.Now(),
 	}
 
-	// 🔴 KLJUČNO: vidi token u logu (simulacija emaila)
 	fmt.Println("ACTIVATION LINK:")
-	// Promenjeno da vodi na Frontend (port 3000) jer je to port koji je dozvoljen na Gateway-u (CORS)
 	fmt.Println("http://localhost:3000/activate?token=" + activationToken)
 
 	return s.userRepo.CreateUser(ctx, user)
 }
 
-// ===== EMAIL CONFIRM =====
 func (s *authService) ConfirmEmail(ctx context.Context, token string) error {
 	fmt.Println("🧠 SERVICE: confirming token =", token)
 
@@ -92,8 +87,6 @@ func (s *authService) ConfirmEmail(ctx context.Context, token string) error {
 	return s.userRepo.UpdateUser(ctx, user)
 }
 
-// ===== LOGIN STEP 1 =====
-
 func (s *authService) LoginStep1(ctx context.Context, req *models.LoginRequest) error {
 	user, err := s.userRepo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
@@ -112,13 +105,11 @@ func (s *authService) LoginStep1(ctx context.Context, req *models.LoginRequest) 
 		return errors.New("invalid credentials")
 	}
 
-	// Generisanje random 6-cifrenog koda
 	otpBytes := make([]byte, 6)
 	_, err = rand.Read(otpBytes)
 	if err != nil {
 		return err
 	}
-	// Mapiranje bajtova u cifre 0-9
 	otp := ""
 	for _, b := range otpBytes {
 		otp += fmt.Sprintf("%d", b%10)
@@ -133,8 +124,6 @@ func (s *authService) LoginStep1(ctx context.Context, req *models.LoginRequest) 
 
 	return s.userRepo.UpdateUser(ctx, user)
 }
-
-// ===== LOGIN STEP 2 =====
 
 func (s *authService) VerifyOTP(ctx context.Context, req *models.OTPVerifyRequest) (string, error) {
 	user, err := s.userRepo.GetUserByEmail(ctx, req.Email)
@@ -152,8 +141,6 @@ func (s *authService) VerifyOTP(ctx context.Context, req *models.OTPVerifyReques
 
 	return jwt.GenerateJWT(user.ID.Hex())
 }
-
-// ===== CHANGE PASSWORD =====
 
 func (s *authService) ChangePassword(ctx context.Context, req *models.ChangePasswordRequest) error {
 	id, err := primitive.ObjectIDFromHex(req.UserID)
@@ -179,8 +166,6 @@ func (s *authService) ChangePassword(ctx context.Context, req *models.ChangePass
 	return s.userRepo.UpdateUser(ctx, user)
 }
 
-// ===== FORGOT PASSWORD =====
-
 func (s *authService) ForgotPassword(ctx context.Context, email string) {
 	user, err := s.userRepo.GetUserByEmail(ctx, email)
 	if err != nil {
@@ -192,8 +177,6 @@ func (s *authService) ForgotPassword(ctx context.Context, email string) {
 
 	_ = s.userRepo.UpdateUser(ctx, user)
 }
-
-// ===== RESET PASSWORD =====
 
 func (s *authService) ResetPassword(ctx context.Context, req *models.ResetPasswordRequest) error {
 	user, err := s.userRepo.GetUserByResetToken(ctx, req.Token)
@@ -215,8 +198,6 @@ func (s *authService) ResetPassword(ctx context.Context, req *models.ResetPasswo
 
 	return s.userRepo.UpdateUser(ctx, user)
 }
-
-// ===== LOGOUT =====
 
 func (s *authService) Logout(ctx context.Context, token string) {
 	// noop / blacklist (nije obavezno za zadatak)

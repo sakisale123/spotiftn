@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import './Auth.css'; // Odmah cemo napraviti i CSS
+import './Auth.css';
 
 const RegisterPage = () => {
     const navigate = useNavigate();
 
-    // State za podatke forme
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -17,7 +16,6 @@ const RegisterPage = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
-    // Rukovanje promenama u inputima
     const handleChange = (e) => {
         setFormData({
             ...formData,
@@ -25,19 +23,16 @@ const RegisterPage = () => {
         });
     };
 
-    // Slanje forme
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setSuccess('');
 
-        // 1. Validacija na klijentu (Zahtev 2.18)
         if (formData.password !== formData.confirmPassword) {
             setError("Lozinke se ne poklapaju!");
             return;
         }
 
-        // Provera jake lozinke: min 8, 1 velika, 1 mala, 1 broj, 1 specijalni karakter
         const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
 
         if (!strongPasswordRegex.test(formData.password)) {
@@ -46,10 +41,8 @@ const RegisterPage = () => {
         }
 
         try {
-            // Čitamo URL iz env varijable ili koristimo Gateway (8080)
             const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
-            // Slanje na Users servis preko Gateway-a
             const response = await axios.post(`${apiUrl}/api/users/auth/register`, {
                 name: formData.name,
                 email: formData.email,
@@ -60,19 +53,15 @@ const RegisterPage = () => {
             setSuccess("Registracija uspešna! Proverite email za aktivacioni link. (Za development: pogledajte konzolu backend servisa)");
 
         } catch (err) {
-            // Prikaz detaljnije greške
             console.error("Registration Error:", err);
             let msg = "Došlo je do greške prilikom registracije.";
 
             if (err.response) {
-                // Server je odgovorio sa statusom van 2xx
                 msg = err.response.data?.message || err.response.data || msg;
                 if (typeof msg === 'object') msg = JSON.stringify(msg);
             } else if (err.request) {
-                // Zahtev je poslat ali nema odgovora (npr. Network Error, CORS)
                 msg = `Nema odgovora od servera. Proverite da li je Gateway pokrenut na portu 8080. Detalji: ${err.message}`;
             } else {
-                // Greška prilikom podesavanja zahteva
                 msg = err.message;
             }
 

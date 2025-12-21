@@ -3,7 +3,7 @@
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background-color: #121212; /* Spotify tamna */
+    background-color: #121212;
     color: white;
 }
 
@@ -12,7 +12,7 @@
     padding: 40px;
     border-radius: 8px;
     width: 400px;
-    box-shadow: 0 4px 60px rgba(0,0,0,0.5);
+    box-shadow: 0 4px 60px rgba(0, 0, 0, 0.5);
     text-align: center;
 }
 
@@ -31,12 +31,12 @@ input {
     border: 1px solid #333;
     background-color: #333;
     color: white;
-    box-sizing: border-box; /* Bitno da padding ne širi input */
+    box-sizing: border-box;
 }
 
 input:focus {
     outline: none;
-    border-color: #1db954; /* Spotify zelena */
+    border-color: #1db954;
 }
 
 .auth-btn {
@@ -78,6 +78,7 @@ input:focus {
     cursor: pointer;
     text-decoration: underline;
 }
+
 .auth-box p {
     color: #b3b3b3;
     margin-top: 1rem;
