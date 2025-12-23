@@ -16,8 +16,6 @@ const ArtistPage = () => {
                 const token = localStorage.getItem('token');
                 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
-                // Note: The /api/content/artists endpoint might need Auth header depending on backend implementation
-                // Adding it just in case, though Gateway strips it usually unless configured
                 const response = await axios.get(`${apiUrl}/api/content/artists`, {
                     headers: {
                         'Authorization': `Bearer ${token}`

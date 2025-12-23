@@ -11,7 +11,7 @@ const LoginPage = () => {
         password: ''
     });
     const [otp, setOtp] = useState('');
-    const [step, setStep] = useState(1); // 1 = Credentials, 2 = OTP
+    const [step, setStep] = useState(1); 
 
     const [error, setError] = useState('');
 
@@ -34,7 +34,6 @@ const LoginPage = () => {
                 password: formData.password
             });
 
-            // If successful, backend generates OTP. Move to step 2.
             setStep(2);
 
         } catch (err) {
