@@ -100,7 +100,7 @@ func (r *MongoContentRepository) GetAllArtists(ctx context.Context) ([]*models.A
 	}
 	defer cursor.Close(ctx)
 
-	var artists []*models.Artist
+	artists := []*models.Artist{}
 	if err := cursor.All(ctx, &artists); err != nil {
 		return nil, err
 	}
@@ -150,7 +150,7 @@ func (r *MongoContentRepository) GetAlbumsByArtist(ctx context.Context, artistID
 	}
 	defer cursor.Close(ctx)
 
-	var albums []*models.Album
+	albums := []*models.Album{}
 	if err := cursor.All(ctx, &albums); err != nil {
 		return nil, err
 	}
@@ -182,7 +182,7 @@ func (r *MongoContentRepository) GetSongsByAlbumID(ctx context.Context, albumID 
 	}
 	defer cursor.Close(ctx)
 
-	var songs []*models.Song
+	songs := []*models.Song{}
 	if err := cursor.All(ctx, &songs); err != nil {
 		return nil, err
 	}

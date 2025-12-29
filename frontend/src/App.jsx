@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import RegisterPage from './components/Auth/RegisterPage';
 import LoginPage from './components/Auth/LoginPage';
 import ActivationPage from './components/Auth/ActivationPage';
@@ -9,7 +9,18 @@ import ArtistPage from './components/Pages/ArtistPage';
 import AlbumPage from './components/Pages/AlbumPage';
 import SongPage from './components/Pages/SongPage';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
+import BottomPlayer from './components/Footer/BottomPlayer';
 import './App.css';
+
+const ConditionalFooter = () => {
+  const location = useLocation();
+  const hideFooterPaths = ['/login', '/register', '/', '/activate', '/forgot-password', '/reset-password'];
+
+  if (hideFooterPaths.includes(location.pathname)) {
+    return null;
+  }
+  return <BottomPlayer />;
+};
 
 function App() {
   return (
@@ -33,6 +44,7 @@ function App() {
             <Route path="/change-password" element={<ChangePasswordPage />} />
           </Route>
         </Routes>
+        <ConditionalFooter />
       </div>
     </Router>
   );

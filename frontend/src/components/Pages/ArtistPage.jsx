@@ -42,7 +42,7 @@ const ArtistPage = () => {
                 {error && <div className="error-msg">{error}</div>}
 
                 <div className="artist-grid">
-                    {artists.map(artist => (
+                    {Array.isArray(artists) && artists.map(artist => (
                         <div key={artist.id} className="artist-card" onClick={() => navigate(`/artists/${artist.id}/albums`)}>
                             <div className="artist-placeholder">🎵</div>
                             <h3>{artist.name}</h3>
