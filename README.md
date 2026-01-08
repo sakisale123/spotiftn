@@ -1,6 +1,6 @@
 # spotiftn
 
-PROCIRAJ SVE!
+PROCITAJ SVE!
 Primer rasporeda rada projekta.
 Postuj verzije koje su dodeljenje u go.mod fajlu (za sada samo go kako budete dodajali i ostali clanovi da znaju da ubace).
 Procitajte sve izaberite koje cete funkcionalnosti raditi, ako mislite da nije dobro grupni poziv pa da napravimo novo.
