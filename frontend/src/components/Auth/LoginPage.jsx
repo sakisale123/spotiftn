@@ -11,7 +11,7 @@ const LoginPage = () => {
         password: ''
     });
     const [otp, setOtp] = useState('');
-    const [step, setStep] = useState(1); 
+    const [step, setStep] = useState(1);
 
     const [error, setError] = useState('');
 
@@ -96,7 +96,7 @@ const LoginPage = () => {
                                 required
                             />
                         </div>
-                        <button type="submit" className="auth-btn">Dalje (Posalji OTP)</button>
+                        <button type="submit" className="auth-btn">Prijavi se</button>
                     </form>
                 )}
 
@@ -113,7 +113,7 @@ const LoginPage = () => {
                                 required
                             />
                         </div>
-                        <button type="submit" className="auth-btn">Potvrdi i Prijavi se</button>
+                        <button type="submit" className="auth-btn">Potvrdi</button>
                         <button type="button" onClick={() => setStep(1)} className="link" style={{ background: 'none', border: 'none', marginTop: '10px' }}>Nazad</button>
                     </form>
                 )}

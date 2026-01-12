@@ -32,6 +32,19 @@ func main() {
 		dbName = "users_db"
 	}
 
+	smtpHost := os.Getenv("SMTP_HOST")
+	smtpPort := os.Getenv("SMTP_PORT")
+	smtpEmail := os.Getenv("SMTP_EMAIL")
+	smtpPassword := os.Getenv("SMTP_PASSWORD")
+
+	if smtpHost == "" || smtpPort == "" || smtpEmail == "" || smtpPassword == "" {
+		fmt.Println("⚠️ WARNING: SMTP configuration is missing or incomplete.")
+		fmt.Println("⚠️ Make sure SMTP_HOST, SMTP_PORT, SMTP_EMAIL, and SMTP_PASSWORD are set.")
+		fmt.Println("⚠️ Check your .env file and docker-compose.yml.")
+	} else {
+		fmt.Println("✅ SMTP Configuration loaded for:", smtpEmail)
+	}
+
 	// ===== MONGO =====
 	client, err := mongo.Connect(
 		context.Background(),
@@ -45,7 +58,8 @@ func main() {
 
 	// ===== DEPENDENCY INJECTION =====
 	userRepo := repository.NewUsersRepository(db)
-	authService := auth.NewAuthService(userRepo)
+	emailService := auth.NewEmailService(smtpHost, smtpPort, smtpEmail, smtpPassword)
+	authService := auth.NewAuthService(userRepo, emailService)
 	authHandler := handlers.NewAuthHandler(authService)
 
 	// ===== ROUTES =====
