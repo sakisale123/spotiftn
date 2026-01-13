@@ -50,7 +50,7 @@ const SongPage = () => {
                 {error && <div className="error-msg">{error}</div>}
 
                 <div className="song-list">
-                    {songs.map((song, index) => (
+                    {Array.isArray(songs) && songs.map((song, index) => (
                         <div key={song.id} className="song-item">
                             <span className="song-number">{index + 1}</span>
                             <div className="song-info">

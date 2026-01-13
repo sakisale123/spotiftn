@@ -44,7 +44,7 @@ const AlbumPage = () => {
                 {error && <div className="error-msg">{error}</div>}
 
                 <div className="artist-grid">
-                    {albums.map(album => (
+                    {Array.isArray(albums) && albums.map(album => (
                         <div key={album.id} className="artist-card" onClick={() => navigate(`/albums/${album.id}/songs`)}>
                             <div className="artist-placeholder">💿</div>
                             <h3>{album.title}</h3>

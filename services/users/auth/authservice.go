@@ -29,12 +29,14 @@ func generateToken() string {
 }
 
 type authService struct {
-	userRepo interfaces.UsersRepository
+	userRepo     interfaces.UsersRepository
+	emailService EmailService
 }
 
-func NewAuthService(userRepo interfaces.UsersRepository) interfaces.AuthService {
+func NewAuthService(userRepo interfaces.UsersRepository, emailService EmailService) interfaces.AuthService {
 	return &authService{
-		userRepo: userRepo,
+		userRepo:     userRepo,
+		emailService: emailService,
 	}
 }
 
@@ -62,8 +64,12 @@ func (s *authService) Register(ctx context.Context, req *models.RegisterRequest)
 		CreatedAt:         time.Now(),
 	}
 
-	fmt.Println("ACTIVATION LINK:")
-	fmt.Println("http://localhost:3000/activate?token=" + activationToken)
+	// fmt.Println("ACTIVATION LINK:")
+	// fmt.Println("http://localhost:3000/activate?token=" + activationToken)
+
+	if err := s.emailService.SendActivationEmail(user.Email, activationToken); err != nil {
+		fmt.Println("⚠️ Failed to send activation email, but proceeding:", err)
+	}
 
 	return s.userRepo.CreateUser(ctx, user)
 }
@@ -118,9 +124,13 @@ func (s *authService) LoginStep1(ctx context.Context, req *models.LoginRequest) 
 	user.OTP = otp
 	user.OTPExpires = time.Now().Add(24 * time.Hour)
 
-	fmt.Println("🔐 OTP GENERATED FOR:", user.Email)
-	fmt.Println("🔐 OTP CODE:", user.OTP)
-	fmt.Println("🔐 OTP EXPIRES:", user.OTPExpires)
+	// fmt.Println("🔐 OTP GENERATED FOR:", user.Email)
+	// fmt.Println("🔐 OTP CODE:", user.OTP)
+	// fmt.Println("🔐 OTP EXPIRES:", user.OTPExpires)
+
+	if err := s.emailService.SendOTP(user.Email, otp); err != nil {
+		fmt.Println("⚠️ Failed to send OTP email, but proceeding:", err)
+	}
 
 	return s.userRepo.UpdateUser(ctx, user)
 }

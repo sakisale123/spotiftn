@@ -18,7 +18,7 @@ const NavBar = () => {
     return (
         <nav className="navbar">
             <div className="navbar-logo">
-                <Link to="/">Spotiftn</Link>
+                <Link to="/artists">Spotiftn</Link>
                 <div className="hamburger" onClick={toggleMenu}>
                     <span></span>
                     <span></span>
