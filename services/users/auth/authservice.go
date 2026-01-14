@@ -149,7 +149,7 @@ func (s *authService) VerifyOTP(ctx context.Context, req *models.OTPVerifyReques
 	user.OTPExpires = time.Time{}
 	_ = s.userRepo.UpdateUser(ctx, user)
 
-	return jwt.GenerateJWT(user.ID.Hex())
+	return jwt.GenerateJWT(user.ID.Hex(), user.Role)
 }
 
 func (s *authService) ChangePassword(ctx context.Context, req *models.ChangePasswordRequest) error {
