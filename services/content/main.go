@@ -31,6 +31,7 @@ func main() {
 	if port == "" {
 		port = ":8082"
 	}
+
 	// Verify if port has : prefix
 	addr := port
 	if len(port) > 0 && port[0] != ':' {

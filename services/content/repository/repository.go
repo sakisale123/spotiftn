@@ -20,6 +20,7 @@ type ContentRepository interface {
 
 	CreateAlbum(ctx context.Context, album *models.Album) (*models.Album, error)
 	GetAlbumByID(ctx context.Context, id string) (*models.Album, error)
+	GetAlbumsByArtist(ctx context.Context, artistID string) ([]*models.Album, error)
 
 	CreateSong(ctx context.Context, song *models.Song) (*models.Song, error)
 	GetSongsByAlbumID(ctx context.Context, albumID string) ([]*models.Song, error)
@@ -99,7 +100,7 @@ func (r *MongoContentRepository) GetAllArtists(ctx context.Context) ([]*models.A
 	}
 	defer cursor.Close(ctx)
 
-	var artists []*models.Artist
+	artists := []*models.Artist{}
 	if err := cursor.All(ctx, &artists); err != nil {
 		return nil, err
 	}
@@ -136,6 +137,26 @@ func (r *MongoContentRepository) GetAlbumByID(ctx context.Context, id string) (*
 	return &album, nil
 }
 
+func (r *MongoContentRepository) GetAlbumsByArtist(ctx context.Context, artistID string) ([]*models.Album, error) {
+	collection := r.Client.Database(r.Database).Collection("albums")
+	objID, err := primitive.ObjectIDFromHex(artistID)
+	if err != nil {
+		return nil, err
+	}
+
+	cursor, err := collection.Find(ctx, bson.M{"artist_ids": objID})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	albums := []*models.Album{}
+	if err := cursor.All(ctx, &albums); err != nil {
+		return nil, err
+	}
+	return albums, nil
+}
+
 func (r *MongoContentRepository) CreateSong(ctx context.Context, song *models.Song) (*models.Song, error) {
 	collection := r.Client.Database(r.Database).Collection("songs")
 	song.CreatedAt = time.Now()
@@ -161,7 +182,7 @@ func (r *MongoContentRepository) GetSongsByAlbumID(ctx context.Context, albumID 
 	}
 	defer cursor.Close(ctx)
 
-	var songs []*models.Song
+	songs := []*models.Song{}
 	if err := cursor.All(ctx, &songs); err != nil {
 		return nil, err
 	}
