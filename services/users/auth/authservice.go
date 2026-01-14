@@ -75,7 +75,7 @@ func (s *authService) Register(ctx context.Context, req *models.RegisterRequest)
 }
 
 func (s *authService) ConfirmEmail(ctx context.Context, token string) error {
-	fmt.Println("🧠 SERVICE: confirming token =", token)
+	fmt.Println(" SERVICE: confirming token =", token)
 
 	user, err := s.userRepo.GetUserByActivationToken(ctx, token)
 	if err != nil {
