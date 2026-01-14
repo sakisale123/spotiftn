@@ -36,10 +36,41 @@ services:
       - "8083:8083"
     environment:
       - SERVER_ADDRESS=:8083
-      - MONGO_URI=mongodb://mongo:27017
-      - MONGO_DB_NAME=notifications_db
+      - CASSANDRA_HOST=cassandra
+      - CASSANDRA_KEYSPACE=notifications_db
     depends_on:
-      - mongo
+      - cassandra
+    networks:
+      - app-network
+
+  cassandra:
+    image: cassandra:latest
+    container_name: cassandra
+    ports:
+      - "9042:9042"
+    environment:
+      - CASSANDRA_CLUSTER_NAME=SpotiftnCluster
+      - CASSANDRA_DC=datacenter1
+      - CASSANDRA_RACK=rack1
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "cqlsh", "-e", "describe keyspaces" ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  cassandra-web:
+    image: ipushc/cassandra-web
+    container_name: cassandra-ui
+    ports:
+      - "8085:8083"
+    environment:
+      - CASSANDRA_HOST_IPS=cassandra
+      - CASSANDRA_PORT=9042
+    depends_on:
+      - cassandra
     networks:
       - app-network
 
@@ -56,7 +87,7 @@ services:
       - notifications
     networks:
       - app-network
-  
+
   frontend:
     build: ./frontend
     ports:
@@ -96,7 +127,7 @@ services:
       - mongo
     networks:
       - app-network
-      
+
 networks:
   app-network:
     driver: bridge

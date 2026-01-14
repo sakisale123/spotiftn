@@ -1,41 +1,39 @@
 package handlers
 
 import (
-	"context"
 	"net/http"
+	"sort"
 	"time"
 
 	"spotiftn/notifications/db"
 	"spotiftn/notifications/models"
 
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/gocql/gocql"
 )
 
 func GetNotifications(c *gin.Context) {
 	userID := c.Param("userID")
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	filter := bson.M{"user_id": userID}
-
-	opts := options.Find().SetSort(bson.D{{Key: "created_at", Value: -1}})
-
-	cursor, err := db.Collection.Find(ctx, filter, opts)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
-		return
-	}
-	defer cursor.Close(ctx)
 
 	notifications := make([]models.Notification, 0)
 
-	if err = cursor.All(ctx, &notifications); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Parsing error"})
-		return
+	fetchForUser := func(uid string) {
+		iter := db.Session.Query(`SELECT id, user_id, type, message, created_at, is_read FROM notifications WHERE user_id = ?`, uid).Iter()
+		var notif models.Notification
+		for iter.Scan(&notif.ID, &notif.UserID, &notif.Type, &notif.Message, &notif.CreatedAt, &notif.IsRead) {
+			notifications = append(notifications, notif)
+		}
+		if err := iter.Close(); err != nil {
+
+		}
 	}
+
+	fetchForUser(userID)
+	fetchForUser("global")
+
+	sort.Slice(notifications, func(i, j int) bool {
+		return notifications[i].CreatedAt.After(notifications[j].CreatedAt)
+	})
 
 	c.JSON(http.StatusOK, notifications)
 }
@@ -47,16 +45,15 @@ func CreateNotification(c *gin.Context) {
 		return
 	}
 
-	notif.ID = primitive.NewObjectID()
+	notif.ID, _ = gocql.RandomUUID()
 	notif.CreatedAt = time.Now()
 	notif.IsRead = false
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	err := db.Session.Query(`INSERT INTO notifications (id, user_id, type, message, created_at, is_read) VALUES (?, ?, ?, ?, ?, ?)`,
+		notif.ID, notif.UserID, notif.Type, notif.Message, notif.CreatedAt, notif.IsRead).Exec()
 
-	_, err := db.Collection.InsertOne(ctx, notif)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save: " + err.Error()})
 		return
 	}
 
