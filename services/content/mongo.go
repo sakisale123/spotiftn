@@ -13,7 +13,8 @@ import (
 func InitMongoDB(ctx context.Context) *mongo.Client {
 	mongoURI := os.Getenv("MONGO_URI")
 	if mongoURI == "" {
-		log.Fatal("MONGO_URI environment variable not set")
+		log.Println("MONGO_URI environment variable not set, defaulting to 'mongodb://localhost:27017'")
+		mongoURI = "mongodb://localhost:27017"
 	}
 
 	clientOptions := options.Client().ApplyURI(mongoURI)
