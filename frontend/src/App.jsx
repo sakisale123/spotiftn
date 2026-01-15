@@ -6,8 +6,12 @@ import ForgotPasswordPage from './components/Auth/ForgotPasswordPage';
 import ResetPasswordPage from './components/Auth/ResetPasswordPage';
 import ChangePasswordPage from './components/Auth/ChangePasswordPage';
 import ArtistPage from './components/Pages/ArtistPage';
+import ArtistCreate from './components/Pages/ArtistCreate';
+import ArtistEdit from './components/Pages/ArtistEdit';
 import AlbumPage from './components/Pages/AlbumPage';
+import AlbumCreate from './components/Pages/AlbumCreate';
 import SongPage from './components/Pages/SongPage';
+import SongCreate from './components/Pages/SongCreate';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import BottomPlayer from './components/Footer/BottomPlayer';
 import './App.css';
@@ -39,8 +43,12 @@ function App() {
 
           <Route element={<ProtectedRoute />}>
             <Route path="/artists" element={<ArtistPage />} />
+            <Route path="/artists/create" element={<ArtistCreate />} />
+            <Route path="/artists/:id/edit" element={<ArtistEdit />} />
             <Route path="/artists/:artistId/albums" element={<AlbumPage />} />
+            <Route path="/albums/create/:artistId" element={<AlbumCreate />} />
             <Route path="/albums/:albumId/songs" element={<SongPage />} />
+            <Route path="/songs/create/:albumId" element={<SongCreate />} />
             <Route path="/change-password" element={<ChangePasswordPage />} />
           </Route>
         </Routes>

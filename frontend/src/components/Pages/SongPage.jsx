@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import NavBar from '../NavBar/NavBar';
+import { isAdmin } from '../../utils/auth';
 import './Pages.css';
 
 const SongPage = () => {
@@ -10,6 +11,7 @@ const SongPage = () => {
     const [songs, setSongs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const userIsAdmin = isAdmin();
 
     useEffect(() => {
         const fetchSongs = async () => {
@@ -45,7 +47,17 @@ const SongPage = () => {
             <NavBar />
             <div className="content-wrap">
                 <button onClick={() => navigate(-1)} className="back-btn">← Back to Albums</button>
-                <h1>Songs</h1>
+                <div className="page-header">
+                    <h1>Songs</h1>
+                    {userIsAdmin && (
+                        <button
+                            className="btn-primary"
+                            onClick={() => navigate(`/songs/create/${albumId}`)}
+                        >
+                            Create Song
+                        </button>
+                    )}
+                </div>
                 {loading && <p>Loading songs...</p>}
                 {error && <div className="error-msg">{error}</div>}
 
