@@ -108,7 +108,13 @@ func (s *authService) LoginStep1(ctx context.Context, req *models.LoginRequest) 
 		return errors.New("password expired")
 	}
 
+	// fmt.Println("🔐 LOGIN DEBUG: user found:", user.Email)
+	// fmt.Println("🔐 LOGIN DEBUG: stored hash:", user.Password)
+	// fmt.Println("🔐 LOGIN DEBUG: provided password:", req.Password)
+
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+		fmt.Println("❌ LOGIN ERROR: password mismatch for", user.Email)
+		fmt.Println("❌ STORED:", user.Password)
 		return errors.New("invalid credentials")
 	}
 
@@ -183,10 +189,20 @@ func (s *authService) ForgotPassword(ctx context.Context, email string) {
 		return
 	}
 
+	// Just debugging
+	// fmt.Println("🔎 FORGOT PASSWORD: Found user", user.Email)
+
 	user.ResetToken = uuid.NewString()
 	user.ResetTokenExpires = time.Now().Add(10 * time.Minute)
 
-	_ = s.userRepo.UpdateUser(ctx, user)
+	if err := s.userRepo.UpdateUser(ctx, user); err != nil {
+		fmt.Println("⚠️ Failed to update user with reset token:", err)
+		return
+	}
+
+	if err := s.emailService.SendPasswordResetEmail(user.Email, user.ResetToken); err != nil {
+		fmt.Println("⚠️ Failed to send password reset email:", err)
+	}
 }
 
 func (s *authService) ResetPassword(ctx context.Context, req *models.ResetPasswordRequest) error {
@@ -200,6 +216,8 @@ func (s *authService) ResetPassword(ctx context.Context, req *models.ResetPasswo
 	}
 
 	hashed, _ := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
+
+	fmt.Println("🔄 RESET PASSWORD: New hash:", string(hashed))
 
 	user.Password = string(hashed)
 	user.PasswordChangedAt = time.Now()

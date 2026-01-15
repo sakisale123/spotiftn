@@ -1,77 +1,128 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import './Auth.css';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import NavBar from '../NavBar/NavBar';
+import '../Pages/Pages.css';
 
 const ResetPasswordPage = () => {
     const [searchParams] = useSearchParams();
-    const navigate = useNavigate();
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
+    const token = searchParams.get('token');
+
+    const [formData, setFormData] = useState({
+        newPassword: '',
+        confirmPassword: ''
+    });
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if (!token) {
+            setError('Invalid or missing reset token.');
+        }
+    }, [token]);
+
+    const handleChange = (e) => {
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value
+        });
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setSuccess('');
 
-        if (password !== confirmPassword) {
-            setError('Lozinke se ne poklapaju!');
+        if (!token) {
+            setError('Missing reset token');
             return;
         }
 
-        const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
-        if (!strongPasswordRegex.test(password)) {
-            setError('Lozinka mora imati bar 8 karaktera, jedno veliko slovo, jedno malo slovo, jedan broj i jedan specijalni karakter.');
+        if (formData.newPassword !== formData.confirmPassword) {
+            setError('Passwords do not match');
             return;
         }
+
+        if (formData.newPassword.length < 8) {
+            setError('Password must be at least 8 characters long');
+            return;
+        }
+
+        setLoading(true);
 
         try {
-            const token = searchParams.get('token');
             const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
             await axios.post(`${apiUrl}/api/users/auth/reset-password`, {
-                token,
-                newPassword: password
+                token: token,
+                newPassword: formData.newPassword
             });
 
-            setSuccess('Lozinka uspešno promenjena! Možete se prijaviti.');
-            setTimeout(() => navigate('/login'), 2000);
+            setSuccess('Password reset successfully! Redirecting to login...');
+
+            setTimeout(() => {
+                navigate('/login');
+            }, 2000);
         } catch (err) {
-            setError(err.response?.data || 'Greška pri promeni lozinke.');
+            console.error('Reset password error:', err);
+            setError(err.response?.data || 'Failed to reset password. Token may be expired.');
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
-        <div className="auth-container">
-            <div className="auth-box">
-                <h2>Reset Lozinke</h2>
+        <div className="page-container">
+            <div className="content-wrap" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <div className="form-container" style={{ maxWidth: '400px', marginTop: '50px' }}>
+                    <h1>Reset Password</h1>
 
-                {error && <div className="alert error">{error}</div>}
-                {success && <div className="alert success">{success}</div>}
+                    {error && <div className="error-msg">{error}</div>}
+                    {success && <div className="success-msg">{success}</div>}
 
-                <form onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <input
-                            type="password"
-                            placeholder="Nova lozinka"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div className="form-group">
-                        <input
-                            type="password"
-                            placeholder="Ponovi lozinku"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <button type="submit" className="auth-btn">Resetuj Lozinku</button>
-                </form>
+                    {!success && (
+                        <form onSubmit={handleSubmit}>
+                            <div className="form-group">
+                                <label htmlFor="newPassword">New Password</label>
+                                <input
+                                    type="password"
+                                    id="newPassword"
+                                    name="newPassword"
+                                    value={formData.newPassword}
+                                    onChange={handleChange}
+                                    placeholder="Enter new password"
+                                    disabled={loading || !token}
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label htmlFor="confirmPassword">Confirm Password</label>
+                                <input
+                                    type="password"
+                                    id="confirmPassword"
+                                    name="confirmPassword"
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
+                                    placeholder="Confirm new password"
+                                    disabled={loading || !token}
+                                />
+                            </div>
+
+                            <div className="form-actions">
+                                <button
+                                    type="submit"
+                                    className="btn-primary"
+                                    style={{ width: '100%' }}
+                                    disabled={loading || !token}
+                                >
+                                    {loading ? 'Resetting...' : 'Reset Password'}
+                                </button>
+                            </div>
+                        </form>
+                    )}
+                </div>
             </div>
         </div>
     );
