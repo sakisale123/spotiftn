@@ -10,6 +10,11 @@ services:
       - SERVER_ADDRESS=:8081
       - MONGO_URI=mongodb://mongo:27017
       - MONGO_DB_NAME=users_db
+      - JWT_SECRET=supersecretkeyfortesting
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_EMAIL=${SMTP_EMAIL}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
     depends_on:
       - mongo
     networks:

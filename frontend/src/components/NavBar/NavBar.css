@@ -43,6 +43,13 @@
     color: white;
 }
 
+/* Navbar Right Section (Notifications + Logout) */
+.navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
 .logout-btn {
     background-color: transparent;
     border: 1px solid #b3b3b3;
@@ -58,6 +65,118 @@
     background-color: rgba(255, 255, 255, 0.1);
 }
 
+/* Notification Styles */
+.notification-container {
+    position: relative;
+}
+
+.notification-bell {
+    cursor: pointer;
+    position: relative;
+    color: #b3b3b3;
+    padding: 5px;
+    transition: color 0.3s;
+}
+
+.notification-bell:hover {
+    color: white;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background-color: #e91429;
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 5px;
+    border-radius: 50%;
+    min-width: 15px;
+    text-align: center;
+}
+
+.notification-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 350px;
+    background-color: #282828;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    margin-top: 15px;
+    overflow: hidden;
+    z-index: 1001;
+    border: 1px solid #333;
+}
+
+.notification-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #333;
+    background-color: #181818;
+}
+
+.notification-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: white;
+}
+
+.notification-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.notification-empty {
+    padding: 20px;
+    text-align: center;
+    color: #b3b3b3;
+}
+
+.notification-item {
+    display: flex;
+    padding: 12px 16px;
+    border-bottom: 1px solid #333;
+    transition: background-color 0.2s;
+}
+
+.notification-item:hover {
+    background-color: #333;
+}
+
+.notification-item:last-child {
+    border-bottom: none;
+}
+
+.notification-item.unread {
+    background-color: #2a2a2a;
+    border-left: 3px solid #1db954;
+}
+
+.notification-icon {
+    margin-right: 12px;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: flex-start;
+    padding-top: 2px;
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-message {
+    margin: 0 0 5px 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    color: #fff;
+}
+
+.notification-time {
+    font-size: 0.75rem;
+    color: #b3b3b3;
+}
+
+/* Hamburger & Mobile */
 .hamburger {
     display: none;
     flex-direction: column;
@@ -124,5 +243,16 @@
     .mobile-only {
         display: block;
         padding: 1rem;
+    }
+
+    .navbar-right {
+        margin-right: 40px;
+        /* Space for hamburger logic if needed */
+    }
+
+    .notification-dropdown {
+        width: 300px;
+        right: -50px;
+        /* Adjust for mobile constraints if needed */
     }
 }

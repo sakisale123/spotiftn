@@ -50,7 +50,7 @@ const RegisterPage = () => {
                 confirmPassword: formData.confirmPassword
             });
 
-            setSuccess("Registracija uspešna! Proverite email za aktivacioni link. (Za development: pogledajte konzolu backend servisa)");
+            setSuccess("Registracija uspešna! Proverite email za aktivacioni link.");
 
         } catch (err) {
             console.error("Registration Error:", err);
