@@ -28,7 +28,6 @@ func main() {
 
 	port := os.Getenv("SERVER_ADDRESS")
 
-	// ja li tvoje greske treba trazim konju
 	if port == "" {
 		port = ":8082"
 	}

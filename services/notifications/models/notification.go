@@ -3,14 +3,14 @@ package models
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"github.com/gocql/gocql"
 )
 
 type Notification struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	UserID    string             `bson:"user_id" json:"user_id" binding:"required"`
-	Type      string             `bson:"type" json:"type" binding:"required"`
-	Message   string             `bson:"message" json:"message" binding:"required"`
-	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
-	IsRead    bool               `bson:"is_read" json:"is_read"`
+	ID        gocql.UUID `json:"id"`
+	UserID    string     `json:"user_id" binding:"required"`
+	Type      string     `json:"type" binding:"required"`
+	Message   string     `json:"message" binding:"required"`
+	CreatedAt time.Time  `json:"created_at"`
+	IsRead    bool       `json:"is_read"`
 }
