@@ -39,7 +39,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-          <Route path="/" element={<RegisterPage />} />
+          <Route path="/" element={<LoginPage />} />
 
           <Route element={<ProtectedRoute />}>
             <Route path="/artists" element={<ArtistPage />} />

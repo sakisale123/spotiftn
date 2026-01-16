@@ -27,7 +27,7 @@ const ArtistCreate = () => {
         setError('');
         setSuccess('');
 
-        // Validation
+
         if (!formData.name.trim()) {
             setError('Artist name is required');
             return;
@@ -47,7 +47,7 @@ const ArtistCreate = () => {
             const token = localStorage.getItem('token');
             const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
-            // Convert genres string to array
+
             const genresArray = formData.genres
                 .split(',')
                 .map(g => g.trim())

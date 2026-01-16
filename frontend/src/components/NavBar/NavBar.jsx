@@ -37,8 +37,7 @@ const NavBar = () => {
 
                 if (Array.isArray(response.data)) {
                     setNotifications(response.data);
-                    // Calculate unread count (assuming is_read field works, if not just show all)
-                    const recipientNotifications = response.data.filter(n => !n.is_read);
+                    const recipientNotifications = response.data.filter(n => n.is_read);
                     setUnreadCount(recipientNotifications.length);
                 }
             } catch (err) {
@@ -48,12 +47,10 @@ const NavBar = () => {
 
         fetchNotifications();
 
-        // Optional: Polling every 30 seconds
         const interval = setInterval(fetchNotifications, 30000);
         return () => clearInterval(interval);
     }, [userId]);
 
-    // Close dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (notifRef.current && !notifRef.current.contains(event.target)) {
@@ -69,7 +66,6 @@ const NavBar = () => {
 
     const toggleNotifications = () => {
         setShowNotifications(!showNotifications);
-        // Here you would typically mark notifications as read on backend
     };
 
     const formatDate = (dateString) => {

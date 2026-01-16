@@ -5,7 +5,7 @@ import NavBar from '../NavBar/NavBar';
 import './Pages.css';
 
 const AlbumCreate = () => {
-    const { artistId } = useParams(); // Optional: if creating from artist page
+    const { artistId } = useParams(); 
     const [formData, setFormData] = useState({
         title: '',
         date: '',
@@ -33,7 +33,6 @@ const AlbumCreate = () => {
                 });
                 setArtists(response.data || []);
 
-                // If artistId is provided, pre-select that artist
                 if (artistId) {
                     setSelectedArtists([artistId]);
                 }
@@ -68,7 +67,6 @@ const AlbumCreate = () => {
         setError('');
         setSuccess('');
 
-        // Validation
         if (!formData.title.trim()) {
             setError('Album title is required');
             return;

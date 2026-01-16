@@ -78,7 +78,6 @@ const ArtistEdit = () => {
             const token = localStorage.getItem('token');
             const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
-            // Convert genres string to array
             const genresArray = formData.genres
                 .split(',')
                 .map(g => g.trim())

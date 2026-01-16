@@ -75,7 +75,7 @@ func main() {
 
 	mux.HandleFunc("/auth/logout", authHandler.Logout)
 
-	// Health check (korisno za test)
+	// Health check
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("users service OK"))

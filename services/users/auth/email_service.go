@@ -37,11 +37,11 @@ func (s *smtpEmailService) SendOTP(to string, otp string) error {
 		"Your OTP code is: %s\r\n", to, otp))
 
 	if err := smtp.SendMail(addr, auth, s.email, []string{to}, msg); err != nil {
-		fmt.Printf("❌ Failed to send email to %s: %v\n", to, err) // Log error but don't crash
+		fmt.Printf("Failed to send email to %s: %v\n", to, err)
 		return err
 	}
 
-	fmt.Printf("📧 Email sent to %s\n", to)
+	fmt.Printf("Email sent to %s\n", to)
 	return nil
 }
 
@@ -59,11 +59,11 @@ func (s *smtpEmailService) SendActivationEmail(to string, token string) error {
 		"%s\r\n", to, link))
 
 	if err := smtp.SendMail(addr, auth, s.email, []string{to}, msg); err != nil {
-		fmt.Printf("❌ Failed to send activation email to %s: %v\n", to, err)
+		fmt.Printf(" Failed to send activation email to %s: %v\n", to, err)
 		return err
 	}
 
-	fmt.Printf("📧 Activation email sent to %s\n", to)
+	fmt.Printf("Activation email sent to %s\n", to)
 	return nil
 }
 
@@ -84,10 +84,10 @@ func (s *smtpEmailService) SendPasswordResetEmail(to string, token string) error
 		"If you did not request this, please ignore this email.\r\n", to, link))
 
 	if err := smtp.SendMail(addr, auth, s.email, []string{to}, msg); err != nil {
-		fmt.Printf("❌ Failed to send reset email to %s: %v\n", to, err)
+		fmt.Printf(" Failed to send reset email to %s: %v\n", to, err)
 		return err
 	}
 
-	fmt.Printf("📧 Reset email sent to %s\n", to)
+	fmt.Printf(" Reset email sent to %s\n", to)
 	return nil
 }

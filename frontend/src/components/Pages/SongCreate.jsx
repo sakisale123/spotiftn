@@ -5,7 +5,7 @@ import NavBar from '../NavBar/NavBar';
 import './Pages.css';
 
 const SongCreate = () => {
-    const { albumId } = useParams(); // Optional: if creating from album page
+    const { albumId } = useParams(); 
     const [formData, setFormData] = useState({
         title: '',
         duration: '',
@@ -28,13 +28,13 @@ const SongCreate = () => {
                 const token = localStorage.getItem('token');
                 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
-                // Fetch artists
+
                 const artistsResponse = await axios.get(`${apiUrl}/api/content/artists`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 setArtists(artistsResponse.data || []);
 
-                // Fetch all albums - we need to get them from all artists
+
                 const albumsData = [];
                 for (const artist of artistsResponse.data || []) {
                     try {
@@ -50,7 +50,7 @@ const SongCreate = () => {
                     }
                 }
 
-                // Remove duplicates based on album id
+
                 const uniqueAlbums = Array.from(
                     new Map(albumsData.map(album => [album.id, album])).values()
                 );
@@ -87,7 +87,7 @@ const SongCreate = () => {
         setError('');
         setSuccess('');
 
-        // Validation
+
         if (!formData.title.trim()) {
             setError('Song title is required');
             return;
@@ -121,7 +121,7 @@ const SongCreate = () => {
                 genre: formData.genre.trim(),
                 album_id: formData.album_id,
                 artist_ids: selectedArtists,
-                audio_url: '' // For now, empty - will be handled later with file upload
+                audio_url: '' 
             };
 
             await axios.post(`${apiUrl}/api/content/songs`, payload, {
