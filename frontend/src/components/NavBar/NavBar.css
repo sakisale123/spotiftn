@@ -50,7 +50,8 @@
     gap: 20px;
 }
 
-.logout-btn {
+.logout-btn,
+.change-password-btn {
     background-color: transparent;
     border: 1px solid #b3b3b3;
     color: white;
@@ -60,9 +61,14 @@
     transition: all 0.3s;
 }
 
-.logout-btn:hover {
+.logout-btn:hover,
+.change-password-btn:hover {
     border-color: white;
     background-color: rgba(255, 255, 255, 0.1);
+}
+
+.change-password-btn {
+    margin-right: 10px;
 }
 
 /* Notification Styles */

@@ -9,7 +9,6 @@ const NavBar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [notifications, setNotifications] = useState([]);
     const [showNotifications, setShowNotifications] = useState(false);
-    const [unreadCount, setUnreadCount] = useState(0);
     const notifRef = useRef(null);
 
     const userId = getUserId();
@@ -37,8 +36,6 @@ const NavBar = () => {
 
                 if (Array.isArray(response.data)) {
                     setNotifications(response.data);
-                    const recipientNotifications = response.data.filter(n => n.is_read);
-                    setUnreadCount(recipientNotifications.length);
                 }
             } catch (err) {
                 console.error("Failed to fetch notifications:", err);
@@ -95,7 +92,6 @@ const NavBar = () => {
                                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                                 <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                             </svg>
-                            {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
                         </div>
 
                         {showNotifications && (
@@ -128,6 +124,9 @@ const NavBar = () => {
                 )}
 
                 <div className="navbar-auth desktop-only">
+                    <Link to="/change-password" title="Change Password" style={{ textDecoration: 'none' }}>
+                        <button className="change-password-btn">Change Password</button>
+                    </Link>
                     <button onClick={handleLogout} className="logout-btn">Logout</button>
                 </div>
             </div>

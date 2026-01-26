@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import NavBar from '../NavBar/NavBar';
+import { getUserId } from '../../utils/auth';
 import './Auth.css';
 
 const ChangePasswordPage = () => {
@@ -39,9 +40,11 @@ const ChangePasswordPage = () => {
 
         try {
             const token = localStorage.getItem('token');
+            const userId = getUserId();
             const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
             await axios.post(`${apiUrl}/api/users/auth/change-password`, {
+                userId: userId,
                 oldPassword: formData.oldPassword,
                 newPassword: formData.newPassword
             }, {

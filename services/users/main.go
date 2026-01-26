@@ -72,6 +72,7 @@ func main() {
 	mux.HandleFunc("/auth/verify-otp", authHandler.VerifyOTP)
 	mux.HandleFunc("/auth/forgot-password", authHandler.ForgotPassword)
 	mux.HandleFunc("/auth/reset-password", authHandler.ResetPassword)
+	mux.HandleFunc("/auth/change-password", authHandler.ChangePassword)
 
 	mux.HandleFunc("/auth/logout", authHandler.Logout)
 

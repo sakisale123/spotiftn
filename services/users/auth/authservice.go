@@ -159,6 +159,10 @@ func (s *authService) ChangePassword(ctx context.Context, req *models.ChangePass
 		return err
 	}
 
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.OldPassword)); err != nil {
+		return errors.New("stara lozinka nije ispravna")
+	}
+
 	if time.Since(user.PasswordChangedAt) < 24*time.Hour {
 		return errors.New("password can be changed only once per day")
 	}
