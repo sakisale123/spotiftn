@@ -65,7 +65,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK) // OTP sent
+	w.WriteHeader(http.StatusOK)
 }
 
 func (h *AuthHandler) VerifyOTP(w http.ResponseWriter, r *http.Request) {

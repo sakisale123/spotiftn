@@ -27,7 +27,7 @@ type Album struct {
 type Song struct {
 	ID        primitive.ObjectID   `bson:"_id,omitempty" json:"id"`
 	Title     string               `bson:"title" json:"title"`
-	Duration  int                  `bson:"duration" json:"duration"` // Seconds
+	Duration  int                  `bson:"duration" json:"duration"`
 	Genre     string               `bson:"genre" json:"genre"`
 	AlbumID   primitive.ObjectID   `bson:"album_id" json:"album_id"`
 	ArtistIDs []primitive.ObjectID `bson:"artist_ids" json:"artist_ids"`

@@ -25,7 +25,7 @@ const ActivationPage = () => {
 
                 setStatus('success');
                 setMessage('Nalog je uspešno aktiviran! Možete se prijaviti.');
-                setTimeout(() => navigate('/login'), 3000);
+                navigate('/login')
             } catch (err) {
                 setStatus('error');
                 setMessage(err.response?.data || 'Greška pri aktivaciji naloga.');

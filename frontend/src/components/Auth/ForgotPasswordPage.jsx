@@ -30,12 +30,9 @@ const ForgotPasswordPage = () => {
 
             setMessage('If an account exists with this email, you will receive a password reset link shortly.');
 
-            // Optionally clear field
             setEmail('');
         } catch (err) {
             console.error('Forgot password error:', err);
-            // Even on error, we might want to show the same message to prevent email enumeration, 
-            // but for this project we can show the error or a generic one.
             setError('Failed to process request. Please try again.');
         } finally {
             setLoading(false);

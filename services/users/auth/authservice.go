@@ -65,11 +65,8 @@ func (s *authService) Register(ctx context.Context, req *models.RegisterRequest)
 		CreatedAt:         time.Now(),
 	}
 
-	// fmt.Println("ACTIVATION LINK:")
-	// fmt.Println("http://localhost:3000/activate?token=" + activationToken)
-
 	if err := s.emailService.SendActivationEmail(user.Email, activationToken); err != nil {
-		fmt.Println("⚠️ Failed to send activation email, but proceeding:", err)
+		fmt.Println("Failed to send activation email, but proceeding:", err)
 	}
 
 	return s.userRepo.CreateUser(ctx, user)
@@ -108,13 +105,9 @@ func (s *authService) LoginStep1(ctx context.Context, req *models.LoginRequest) 
 		return errors.New("password expired")
 	}
 
-	// fmt.Println("🔐 LOGIN DEBUG: user found:", user.Email)
-	// fmt.Println("🔐 LOGIN DEBUG: stored hash:", user.Password)
-	// fmt.Println("🔐 LOGIN DEBUG: provided password:", req.Password)
-
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-		fmt.Println("❌ LOGIN ERROR: password mismatch for", user.Email)
-		fmt.Println("❌ STORED:", user.Password)
+		fmt.Println("LOGIN ERROR: password mismatch for", user.Email)
+		fmt.Println("STORED:", user.Password)
 		return errors.New("invalid credentials")
 	}
 
@@ -131,12 +124,8 @@ func (s *authService) LoginStep1(ctx context.Context, req *models.LoginRequest) 
 	user.OTP = otp
 	user.OTPExpires = time.Now().Add(24 * time.Hour)
 
-	// fmt.Println("🔐 OTP GENERATED FOR:", user.Email)
-	// fmt.Println("🔐 OTP CODE:", user.OTP)
-	// fmt.Println("🔐 OTP EXPIRES:", user.OTPExpires)
-
 	if err := s.emailService.SendOTP(user.Email, otp); err != nil {
-		fmt.Println("⚠️ Failed to send OTP email, but proceeding:", err)
+		fmt.Println("Failed to send OTP email, but proceeding:", err)
 	}
 
 	return s.userRepo.UpdateUser(ctx, user)
@@ -170,6 +159,10 @@ func (s *authService) ChangePassword(ctx context.Context, req *models.ChangePass
 		return err
 	}
 
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.OldPassword)); err != nil {
+		return errors.New("stara lozinka nije ispravna")
+	}
+
 	if time.Since(user.PasswordChangedAt) < 24*time.Hour {
 		return errors.New("password can be changed only once per day")
 	}
@@ -188,9 +181,6 @@ func (s *authService) ForgotPassword(ctx context.Context, email string) {
 	if err != nil {
 		return
 	}
-
-	// Just debugging
-	// fmt.Println("🔎 FORGOT PASSWORD: Found user", user.Email)
 
 	user.ResetToken = uuid.NewString()
 	user.ResetTokenExpires = time.Now().Add(10 * time.Minute)
@@ -229,5 +219,5 @@ func (s *authService) ResetPassword(ctx context.Context, req *models.ResetPasswo
 }
 
 func (s *authService) Logout(ctx context.Context, token string) {
-	// noop / blacklist (nije obavezno za zadatak)
+
 }

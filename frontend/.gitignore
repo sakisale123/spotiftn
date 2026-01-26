@@ -12,7 +12,6 @@ dist
 dist-ssr
 *.local
 
-planer
 
 # Editor directories and files
 .vscode/*
