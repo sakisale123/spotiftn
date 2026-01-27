@@ -173,30 +173,56 @@ func (s *authService) VerifyOTP(ctx context.Context, req *models.OTPVerifyReques
 }
 
 func (s *authService) ChangePassword(ctx context.Context, req *models.ChangePasswordRequest) error {
+	const minPasswordChangeInterval = 24 * time.Hour
+
+	// 1. Validacija user ID-a
 	id, err := primitive.ObjectIDFromHex(req.UserID)
 	if err != nil {
 		return errors.New("invalid user id")
 	}
 
+	// 2. Učitaj korisnika
 	user, err := s.userRepo.GetUserByID(ctx, id)
 	if err != nil {
 		return err
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.OldPassword)); err != nil {
+	// 3. Provera stare lozinke
+	if err := bcrypt.CompareHashAndPassword(
+		[]byte(user.Password),
+		[]byte(req.OldPassword),
+	); err != nil {
 		return errors.New("stara lozinka nije ispravna")
 	}
 
-	if time.Since(user.PasswordChangedAt) < 24*time.Hour {
-		return errors.New("password can be changed only once per day")
+	// 4. 24h pravilo – mora proći bar 24 sata od poslednje promene
+	if time.Since(user.PasswordChangedAt) < minPasswordChangeInterval {
+		return errors.New("password can be changed only once every 24 hours")
 	}
 
-	hashed, _ := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
+	// 5. (Preporuka) Nova lozinka mora biti drugačija
+	if bcrypt.CompareHashAndPassword(
+		[]byte(user.Password),
+		[]byte(req.NewPassword),
+	) == nil {
+		return errors.New("new password must be different from old password")
+	}
 
+	// 6. Hash nove lozinke
+	hashed, err := bcrypt.GenerateFromPassword(
+		[]byte(req.NewPassword),
+		bcrypt.DefaultCost,
+	)
+	if err != nil {
+		return err
+	}
+
+	// 7. Update polja
 	user.Password = string(hashed)
 	user.PasswordChangedAt = time.Now()
 	user.PasswordExpiresAt = time.Now().Add(60 * 24 * time.Hour)
 
+	// 8. Snimi u bazu
 	return s.userRepo.UpdateUser(ctx, user)
 }
 
