@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -24,6 +25,13 @@ func NewUsersRepository(db *mongo.Database) interfaces.UsersRepository {
 	return &usersRepository{
 		collection: db.Collection("users"),
 	}
+}
+
+func rejectMongoOperators(s string) error {
+	if strings.Contains(s, "$") {
+		return errors.New("invalid characters")
+	}
+	return nil
 }
 
 //

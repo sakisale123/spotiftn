@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
+	"strings"
 	"time"
 
 	"crypto/rand"
@@ -40,9 +42,27 @@ func NewAuthService(userRepo interfaces.UsersRepository, emailService EmailServi
 	}
 }
 
+var strongPasswordRegex = regexp.MustCompile(
+	`^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]).{8,}$`,
+)
+
+func isStrongPassword(password string) bool {
+	return strongPasswordRegex.MatchString(password)
+}
+
 func (s *authService) Register(ctx context.Context, req *models.RegisterRequest) error {
+
+	if err := rejectMongoOperators(req.Email); err != nil {
+		return err
+	}
 	if req.Password != req.ConfirmPassword {
 		return errors.New("passwords do not match")
+	}
+
+	if !isStrongPassword(req.Password) {
+		return errors.New(
+			"password must be at least 8 characters long and contain uppercase, lowercase, number, and special character",
+		)
 	}
 
 	hashed, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
@@ -92,6 +112,10 @@ func (s *authService) ConfirmEmail(ctx context.Context, token string) error {
 }
 
 func (s *authService) LoginStep1(ctx context.Context, req *models.LoginRequest) error {
+
+	if err := rejectMongoOperators(req.Email); err != nil {
+		return err
+	}
 	user, err := s.userRepo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
 		return errors.New("invalid credentials")
@@ -220,4 +244,11 @@ func (s *authService) ResetPassword(ctx context.Context, req *models.ResetPasswo
 
 func (s *authService) Logout(ctx context.Context, token string) {
 
+}
+
+func rejectMongoOperators(s string) error {
+	if strings.Contains(s, "$") {
+		return errors.New("invalid characters")
+	}
+	return nil
 }
