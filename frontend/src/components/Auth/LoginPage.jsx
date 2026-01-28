@@ -39,7 +39,15 @@ const LoginPage = () => {
         } catch (err) {
             console.error(err);
             const errorMessage = err.response?.data?.message || err.response?.data || "Došlo je do greške prilikom prijave.";
-            setError(typeof errorMessage === 'object' ? JSON.stringify(errorMessage) : errorMessage);
+
+            if (errorMessage === "password expired") {
+                setError("Vaša lozinka je istekla. Molimo vas da je resetujete.");
+                setTimeout(() => {
+                    navigate('/forgot-password');
+                }, 2000);
+            } else {
+                setError(typeof errorMessage === 'object' ? JSON.stringify(errorMessage) : errorMessage);
+            }
         }
     };
 
