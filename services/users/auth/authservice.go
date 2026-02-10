@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"regexp"
 	"strings"
 	"time"
 
@@ -42,12 +41,24 @@ func NewAuthService(userRepo interfaces.UsersRepository, emailService EmailServi
 	}
 }
 
-var strongPasswordRegex = regexp.MustCompile(
-	`^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]).{8,}$`,
-)
-
 func isStrongPassword(password string) bool {
-	return strongPasswordRegex.MatchString(password)
+	if len(password) < 8 {
+		return false
+	}
+	var hasUpper, hasLower, hasNumber, hasSpecial bool
+	for _, char := range password {
+		switch {
+		case 'A' <= char && char <= 'Z':
+			hasUpper = true
+		case 'a' <= char && char <= 'z':
+			hasLower = true
+		case '0' <= char && char <= '9':
+			hasNumber = true
+		case strings.ContainsAny(string(char), "!@#$%^&*()_+-=[]{};':\"\\|,.<>/?"):
+			hasSpecial = true
+		}
+	}
+	return hasUpper && hasLower && hasNumber && hasSpecial
 }
 
 func (s *authService) Register(ctx context.Context, req *models.RegisterRequest) error {

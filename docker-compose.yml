@@ -84,8 +84,10 @@ services:
     container_name: api-gateway
     ports:
       - "8080:8080"
+      - "443:443"
     volumes:
       - ./services/gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./services/gateway/certs:/etc/nginx/certs:ro
     depends_on:
       - users
       - content
@@ -101,7 +103,7 @@ services:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      - VITE_API_URL=http://localhost:8080
+      - VITE_API_URL=https://localhost
     depends_on:
       - gateway
     networks:
