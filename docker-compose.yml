@@ -10,7 +10,7 @@ services:
       - SERVER_ADDRESS=:8081
       - MONGO_URI=mongodb://mongo:27017
       - MONGO_DB_NAME=users_db
-      - JWT_SECRET=supersecretkeyfortesting
+      - JWT_SECRET=${JWT_SECRET}
       - SMTP_HOST=${SMTP_HOST}
       - SMTP_PORT=${SMTP_PORT}
       - SMTP_EMAIL=${SMTP_EMAIL}
@@ -128,8 +128,8 @@ services:
       - "8084:8081"
     environment:
       ME_CONFIG_MONGODB_SERVER: mongo
-      ME_CONFIG_BASICAUTH_USERNAME: admin
-      ME_CONFIG_BASICAUTH_PASSWORD: admin1
+      ME_CONFIG_BASICAUTH_USERNAME: ${ME_CONFIG_BASICAUTH_USERNAME}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${ME_CONFIG_BASICAUTH_PASSWORD}
     depends_on:
       - mongo
     networks:
