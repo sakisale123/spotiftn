@@ -37,8 +37,6 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// IZVLAČENJE IZ MapClaims
-
 		userID, ok := claims["userId"].(string)
 		if !ok {
 			http.Error(w, "invalid userId in token", http.StatusUnauthorized)

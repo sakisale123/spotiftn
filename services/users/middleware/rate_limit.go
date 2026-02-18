@@ -18,8 +18,8 @@ var (
 )
 
 const (
-	maxRequests = 20          // koliko zahteva
-	window      = time.Minute // u kom periodu
+	maxRequests = 20
+	window      = time.Minute
 )
 
 func RateLimitMiddleware(next http.Handler) http.Handler {

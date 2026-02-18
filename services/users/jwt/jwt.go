@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"time"
 
@@ -22,6 +23,13 @@ func GenerateJWT(userID string, role string) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	tokenString, err := token.SignedString([]byte(secret))
+	if err != nil {
+		return "", err
+	}
+	fmt.Printf("JWT TOKEN:\n", tokenString)
+
 	return token.SignedString([]byte(secret))
 }
 func ValidateJWT(tokenString string) (jwt.MapClaims, error) {
