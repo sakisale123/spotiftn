@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"spotiftn/content/content_handler"
+	"spotiftn/content/middleware"
 
 	"github.com/gorilla/mux"
 )
@@ -13,10 +14,14 @@ func SetupRoutes(handler *content_handler.ContentHandler) *mux.Router {
 
 	router.Use(loggingMiddleware)
 
-	router.HandleFunc("/artists", handler.CreateArtist).Methods("POST")
-	router.HandleFunc("/artists/{id}", handler.UpdateArtist).Methods("PUT")
-	router.HandleFunc("/albums", handler.CreateAlbum).Methods("POST")
-	router.HandleFunc("/songs", handler.CreateSong).Methods("POST")
+	// Protected routes
+	protected := router.PathPrefix("").Subrouter()
+	protected.Use(middleware.AuthMiddleware)
+
+	protected.HandleFunc("/artists", handler.CreateArtist).Methods("POST")
+	protected.HandleFunc("/artists/{id}", handler.UpdateArtist).Methods("PUT")
+	protected.HandleFunc("/albums", handler.CreateAlbum).Methods("POST")
+	protected.HandleFunc("/songs", handler.CreateSong).Methods("POST")
 
 	router.HandleFunc("/artists", handler.GetAllArtists).Methods("GET")
 	router.HandleFunc("/artists/{id}", handler.GetArtistByID).Methods("GET")

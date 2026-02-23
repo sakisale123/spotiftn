@@ -9,6 +9,7 @@ import (
 
 	"spotiftn/users/auth"
 	"spotiftn/users/handlers"
+	"spotiftn/users/middleware"
 	"spotiftn/users/repository"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -16,6 +17,7 @@ import (
 )
 
 func main() {
+
 	// ===== CONFIG =====
 	port := os.Getenv("SERVER_ADDRESS")
 	if port == "" {
@@ -39,8 +41,6 @@ func main() {
 
 	if smtpHost == "" || smtpPort == "" || smtpEmail == "" || smtpPassword == "" {
 		fmt.Println("⚠️ WARNING: SMTP configuration is missing or incomplete.")
-		fmt.Println("⚠️ Make sure SMTP_HOST, SMTP_PORT, SMTP_EMAIL, and SMTP_PASSWORD are set.")
-		fmt.Println("⚠️ Check your .env file and docker-compose.yml.")
 	} else {
 		fmt.Println("✅ SMTP Configuration loaded for:", smtpEmail)
 	}
@@ -65,16 +65,24 @@ func main() {
 	// ===== ROUTES =====
 	mux := http.NewServeMux()
 
-	// Auth
+	// -------- PUBLIC ROUTES --------
 	mux.HandleFunc("/auth/register", authHandler.Register)
 	mux.HandleFunc("/auth/confirm", authHandler.ConfirmEmail)
 	mux.HandleFunc("/auth/login", authHandler.Login)
 	mux.HandleFunc("/auth/verify-otp", authHandler.VerifyOTP)
 	mux.HandleFunc("/auth/forgot-password", authHandler.ForgotPassword)
 	mux.HandleFunc("/auth/reset-password", authHandler.ResetPassword)
-	mux.HandleFunc("/auth/change-password", authHandler.ChangePassword)
 
-	mux.HandleFunc("/auth/logout", authHandler.Logout)
+	// -------- PROTECTED ROUTES --------
+	mux.Handle(
+		"/auth/change-password",
+		middleware.AuthMiddleware(http.HandlerFunc(authHandler.ChangePassword)),
+	)
+
+	mux.Handle(
+		"/auth/logout",
+		middleware.AuthMiddleware(http.HandlerFunc(authHandler.Logout)),
+	)
 
 	// Health check
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -82,7 +90,9 @@ func main() {
 		w.Write([]byte("users service OK"))
 	})
 
-	// ===== START SERVER =====
+	// ===== START SERVER WITH RATE LIMIT (DoS PROTECTION) =====
+	wrappedMux := middleware.RateLimitMiddleware(mux)
+
 	fmt.Println("Users service running on", port)
-	log.Fatal(http.ListenAndServe(port, mux))
+	log.Fatal(http.ListenAndServe(port, wrappedMux))
 }
