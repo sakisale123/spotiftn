@@ -93,6 +93,6 @@ func main() {
 	// ===== START SERVER WITH RATE LIMIT (DoS PROTECTION) =====
 	wrappedMux := middleware.RateLimitMiddleware(mux)
 
-	fmt.Println("Users service running on", port)
-	log.Fatal(http.ListenAndServe(port, wrappedMux))
+	fmt.Println("Users service running on HTTPS", port)
+	log.Fatal(http.ListenAndServeTLS(port, "/etc/ssl/certs/server.crt", "/etc/ssl/certs/server.key", wrappedMux))
 }
