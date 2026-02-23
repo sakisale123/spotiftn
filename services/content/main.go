@@ -37,7 +37,7 @@ func main() {
 		addr = ":" + port
 	}
 
-	log.Printf("Content Service starting on port %s\n", addr)
+	log.Printf("Content Service starting on HTTPS port %s\n", addr)
 
 	srv := &http.Server{
 		Addr:         addr,
@@ -47,7 +47,7 @@ func main() {
 		IdleTimeout:  120 * time.Second,
 	}
 
-	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+	if err := srv.ListenAndServeTLS("/etc/ssl/certs/server.crt", "/etc/ssl/certs/server.key"); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Content Service failed to start: %v", err)
 	}
 }

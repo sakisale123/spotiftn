@@ -15,5 +15,5 @@ func main() {
 	if port == "" {
 		port = ":8083"
 	}
-	r.Run(port)
+	r.RunTLS(port, "/etc/ssl/certs/server.crt", "/etc/ssl/certs/server.key")
 }
