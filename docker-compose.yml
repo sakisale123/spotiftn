@@ -1,0 +1,273 @@
+services:
+  users:
+    build: ./services/users
+    container_name: users-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SERVER_ADDRESS=:8081
+      - MONGO_URI=mongodb://mongo-users:27017
+      - MONGO_DB_NAME=users_db
+      - JWT_SECRET=${JWT_SECRET}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_EMAIL=${SMTP_EMAIL}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+    depends_on:
+      - mongo-users
+    volumes:
+      - ./services/gateway/certs/server.crt:/etc/ssl/certs/server.crt:ro
+      - ./services/gateway/certs/server.key:/etc/ssl/certs/server.key:ro
+    networks:
+      - app-network
+
+  content:
+    build: ./services/content
+    container_name: content-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SERVER_ADDRESS=:8082
+      - MONGO_URI=mongodb://mongo-content:27017
+      - MONGO_DB_NAME=content_db
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      - mongo-content
+    volumes:
+      - ./services/gateway/certs/server.crt:/etc/ssl/certs/server.crt:ro
+      - ./services/gateway/certs/server.key:/etc/ssl/certs/server.key:ro
+    networks:
+      - app-network
+
+  notifications:
+    build: ./services/notifications
+    container_name: notification-service
+    ports:
+      - "8083:8083"
+    environment:
+      - SERVER_ADDRESS=:8083
+      - CASSANDRA_HOST=cassandra
+      - CASSANDRA_KEYSPACE=notifications_db
+    depends_on:
+      - cassandra
+    volumes:
+      - ./services/gateway/certs/server.crt:/etc/ssl/certs/server.crt:ro
+      - ./services/gateway/certs/server.key:/etc/ssl/certs/server.key:ro
+    networks:
+      - app-network
+
+  ratings:
+    build: ./services/ratings
+    container_name: ratings-service
+    ports:
+      - "8087:8087"
+    environment:
+      - SERVER_ADDRESS=:8087
+      - MONGO_URI=mongodb://mongo-ratings:27017
+      - MONGO_DB_NAME=ratings_db
+      - CONTENT_SERVICE_URL=https://content:8082
+    depends_on:
+      - mongo-ratings
+      - content
+    volumes:
+      - ./services/gateway/certs/server.crt:/etc/ssl/certs/server.crt:ro
+      - ./services/gateway/certs/server.key:/etc/ssl/certs/server.key:ro
+    networks:
+      - app-network
+
+  subscriptions:
+    build: ./services/subscriptions
+    container_name: subscriptions-service
+    ports:
+      - "8089:8089"
+    environment:
+      - SERVER_ADDRESS=:8089
+      - MONGO_URI=mongodb://mongo-subscriptions:27017
+      - MONGO_DB_NAME=subscriptions_db
+      - CONTENT_SERVICE_URL=http://content:8082
+    depends_on:
+      - mongo-subscriptions
+      - content
+    volumes:
+      - ./services/gateway/certs/server.crt:/etc/ssl/certs/server.crt:ro
+      - ./services/gateway/certs/server.key:/etc/ssl/certs/server.key:ro
+    networks:
+      - app-network
+
+  cassandra:
+    image: cassandra:latest
+    container_name: cassandra
+    ports:
+      - "9042:9042"
+    environment:
+      - CASSANDRA_CLUSTER_NAME=SpotiftnCluster
+      - CASSANDRA_DC=datacenter1
+      - CASSANDRA_RACK=rack1
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "cqlsh", "-e", "describe keyspaces" ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  cassandra-web:
+    image: ipushc/cassandra-web
+    container_name: cassandra-ui
+    ports:
+      - "8085:8083"
+    environment:
+      - CASSANDRA_HOST_IPS=cassandra
+      - CASSANDRA_PORT=9042
+    depends_on:
+      - cassandra
+    networks:
+      - app-network
+
+  gateway:
+    build: ./services/gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+      - "443:443"
+    volumes:
+      - ./services/gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./services/gateway/certs:/etc/nginx/certs:ro
+    depends_on:
+      - users
+      - content
+      - notifications
+      - ratings
+      - subscriptions
+    networks:
+      - app-network
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - ./services/gateway/certs:/etc/ssl/certs:ro
+    environment:
+      - VITE_API_URL=http://localhost:8080
+    depends_on:
+      - gateway
+    networks:
+      - app-network
+
+  mongo-users:
+    image: mongo:5.0
+    ports:
+      - "27017:27017" # Exposed locally mostly for dev tools to connect to Users DB
+    restart: always
+    container_name: mongo-users
+    volumes:
+      - mongo_users_data:/data/db
+    networks:
+      - app-network
+
+  mongo-content:
+    image: mongo:5.0
+    ports:
+      - "27018:27017" # Exposed locally to another port to connect to Content DB
+    restart: always
+    container_name: mongo-content
+    volumes:
+      - mongo_content_data:/data/db
+    networks:
+      - app-network
+
+  mongo-ui-users:
+    image: mongo-express
+    container_name: mongo-ui-users
+    restart: always
+    ports:
+      - "8084:8081"
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongo-users
+      ME_CONFIG_BASICAUTH_USERNAME: ${ME_CONFIG_BASICAUTH_USERNAME}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${ME_CONFIG_BASICAUTH_PASSWORD}
+    depends_on:
+      - mongo-users
+    networks:
+      - app-network
+
+  mongo-ui-content:
+    image: mongo-express
+    container_name: mongo-ui-content
+    restart: always
+    ports:
+      - "8086:8081"
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongo-content
+      ME_CONFIG_BASICAUTH_USERNAME: ${ME_CONFIG_BASICAUTH_USERNAME}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${ME_CONFIG_BASICAUTH_PASSWORD}
+    depends_on:
+      - mongo-content
+    networks:
+      - app-network
+
+  mongo-ratings:
+    image: mongo:5.0
+    ports:
+      - "27019:27017" # Exposed locally
+    restart: always
+    container_name: mongo-ratings
+    volumes:
+      - mongo_ratings_data:/data/db
+    networks:
+      - app-network
+
+  mongo-ui-ratings:
+    image: mongo-express
+    container_name: mongo-ui-ratings
+    restart: always
+    ports:
+      - "8088:8081"
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongo-ratings
+      ME_CONFIG_BASICAUTH_USERNAME: ${ME_CONFIG_BASICAUTH_USERNAME}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${ME_CONFIG_BASICAUTH_PASSWORD}
+    depends_on:
+      - mongo-ratings
+    networks:
+      - app-network
+
+  mongo-subscriptions:
+    image: mongo:5.0
+    ports:
+      - "27020:27017" # Exposed locally
+    restart: always
+    container_name: mongo-subscriptions
+    volumes:
+      - mongo_subscriptions_data:/data/db
+    networks:
+      - app-network
+
+  mongo-ui-subscriptions:
+    image: mongo-express
+    container_name: mongo-ui-subscriptions
+    restart: always
+    ports:
+      - "8090:8081"
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongo-subscriptions
+      ME_CONFIG_BASICAUTH_USERNAME: ${ME_CONFIG_BASICAUTH_USERNAME}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${ME_CONFIG_BASICAUTH_PASSWORD}
+    depends_on:
+      - mongo-subscriptions
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongo_users_data:
+  mongo_content_data:
+  mongo_ratings_data:
+  mongo_subscriptions_data:
