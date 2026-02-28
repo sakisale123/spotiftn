@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 import { isAdmin } from '../../utils/auth';
+import { GENRES } from '../../utils/constants';
 import './Pages.css';
 
 const AlbumCreate = () => {
@@ -167,15 +168,20 @@ const AlbumCreate = () => {
 
                         <div className="form-group">
                             <label htmlFor="genre">Genre *</label>
-                            <input
-                                type="text"
+                            <select
                                 id="genre"
                                 name="genre"
                                 value={formData.genre}
                                 onChange={handleChange}
-                                placeholder="e.g., Rock, Pop, Jazz"
                                 disabled={loading}
-                            />
+                            >
+                                <option value="">Select a genre</option>
+                                {GENRES.map(genre => (
+                                    <option key={genre} value={genre.toLowerCase()}>
+                                        {genre}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
 
                         <div className="form-group">

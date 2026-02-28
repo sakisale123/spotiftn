@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { isAdmin } from '../../utils/auth';
+import { GENRES } from '../../utils/constants';
 import './Pages.css';
 
 const ArtistCreate = () => {
     const [formData, setFormData] = useState({
         name: '',
         biography: '',
-        genres: ''
+        genres: []
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -20,6 +21,22 @@ const ArtistCreate = () => {
             ...formData,
             [e.target.name]: e.target.value
         });
+    };
+
+    const handleGenreToggle = (genre) => {
+        const lowerGenre = genre.toLowerCase();
+        const currentGenres = [...formData.genres];
+        if (currentGenres.includes(lowerGenre)) {
+            setFormData({
+                ...formData,
+                genres: currentGenres.filter(g => g !== lowerGenre)
+            });
+        } else {
+            setFormData({
+                ...formData,
+                genres: [...currentGenres, lowerGenre]
+            });
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -36,7 +53,7 @@ const ArtistCreate = () => {
             setError('Biography is required');
             return;
         }
-        if (!formData.genres.trim()) {
+        if (formData.genres.length === 0) {
             setError('At least one genre is required');
             return;
         }
@@ -48,15 +65,10 @@ const ArtistCreate = () => {
             const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 
-            const genresArray = formData.genres
-                .split(',')
-                .map(g => g.trim())
-                .filter(g => g.length > 0);
-
             const payload = {
                 name: formData.name.trim(),
                 biography: formData.biography.trim(),
-                genres: genresArray
+                genres: formData.genres
             };
 
             await axios.post(`${apiUrl}/api/content/artists`, payload, {
@@ -115,17 +127,21 @@ const ArtistCreate = () => {
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="genres">Genres * (comma-separated)</label>
-                            <input
-                                type="text"
-                                id="genres"
-                                name="genres"
-                                value={formData.genres}
-                                onChange={handleChange}
-                                placeholder="e.g., Rock, Pop, Jazz"
-                                disabled={loading}
-                            />
-                            <small className="form-hint">Enter genres separated by commas</small>
+                            <label>Genres * (select all that apply)</label>
+                            <div className="genre-selection">
+                                {GENRES.map(genre => (
+                                    <div key={genre} className="checkbox-item">
+                                        <input
+                                            type="checkbox"
+                                            id={`genre-${genre}`}
+                                            checked={formData.genres.includes(genre.toLowerCase())}
+                                            onChange={() => handleGenreToggle(genre)}
+                                            disabled={loading}
+                                        />
+                                        <label htmlFor={`genre-${genre}`}>{genre}</label>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
 
                         <div className="form-actions">

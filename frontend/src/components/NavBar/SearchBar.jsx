@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { GENRES } from '../../utils/constants';
 import './NavBar.css';
 
 const SearchBar = ({ onSearch }) => {
@@ -10,7 +11,7 @@ const SearchBar = ({ onSearch }) => {
     });
 
     const filterRef = useRef(null);
-    const availableGenres = ['Rock', 'Pop', 'Jazz', 'HipHop', 'Classical', 'Electronic', 'R&B'];
+    const availableGenres = GENRES;
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -39,11 +40,12 @@ const SearchBar = ({ onSearch }) => {
     };
 
     const handleGenreToggle = (genre) => {
+        const lowerGenre = genre.toLowerCase();
         setFilters(prev => ({
             ...prev,
-            genres: prev.genres.includes(genre)
-                ? prev.genres.filter(g => g !== genre)
-                : [...prev.genres, genre]
+            genres: prev.genres.includes(lowerGenre)
+                ? prev.genres.filter(g => g !== lowerGenre)
+                : [...prev.genres, lowerGenre]
         }));
     };
 
@@ -96,7 +98,7 @@ const SearchBar = ({ onSearch }) => {
                                 <label key={genre} className="filter-label">
                                     <input
                                         type="checkbox"
-                                        checked={filters.genres.includes(genre)}
+                                        checked={filters.genres.includes(genre.toLowerCase())}
                                         onChange={() => handleGenreToggle(genre)}
                                     />
                                     {genre}
