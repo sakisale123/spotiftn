@@ -84,7 +84,7 @@ services:
       - SERVER_ADDRESS=:8089
       - MONGO_URI=mongodb://mongo-subscriptions:27017
       - MONGO_DB_NAME=subscriptions_db
-      - CONTENT_SERVICE_URL=http://content:8082
+      - CONTENT_SERVICE_URL=https://content:8082
     depends_on:
       - mongo-subscriptions
       - content

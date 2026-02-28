@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { getUserId } from '../../utils/auth';
+import { useSearch } from '../../context/SearchContext';
+import SearchBar from './SearchBar';
 import './NavBar.css';
 
 const NavBar = () => {
@@ -12,6 +14,7 @@ const NavBar = () => {
     const notifRef = useRef(null);
 
     const userId = getUserId();
+    const { performSearch } = useSearch();
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -83,6 +86,8 @@ const NavBar = () => {
             <ul className={`navbar-links ${isMenuOpen ? 'active' : ''}`}>
                 <li onClick={() => setIsMenuOpen(false)}><Link to="/artists">Artists</Link></li>
             </ul>
+
+            <SearchBar onSearch={performSearch} />
 
             <div className="navbar-right">
                 {userId && (

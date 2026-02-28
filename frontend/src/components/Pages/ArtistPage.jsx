@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import NavBar from '../NavBar/NavBar';
-import { isAdmin } from '../../utils/auth';
+import { isAdmin, getUserId } from '../../utils/auth';
 import './Pages.css';
 
 const ArtistPage = () => {
@@ -11,19 +10,32 @@ const ArtistPage = () => {
     const [error, setError] = useState('');
     const navigate = useNavigate();
     const userIsAdmin = isAdmin();
+    const userId = getUserId();
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+
+    const fetchSubscriptionStatus = async (artistList) => {
+        const token = localStorage.getItem('token');
+        const updatedArtists = await Promise.all(artistList.map(async (artist) => {
+            try {
+                const response = await axios.get(`${apiUrl}/api/subscriptions/status?targetId=${artist.id}&userId=${userId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                return { ...artist, isSubscribed: response.data.isSubscribed, subscriptionId: response.data.subscriptionId };
+            } catch (err) {
+                return { ...artist, isSubscribed: false };
+            }
+        }));
+        setArtists(updatedArtists);
+    };
 
     useEffect(() => {
         const fetchArtists = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-
                 const response = await axios.get(`${apiUrl}/api/content/artists`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
-                setArtists(response.data);
+                fetchSubscriptionStatus(response.data);
             } catch (err) {
                 console.error("Error fetching artists:", err);
                 setError('Failed to load artists.');
@@ -35,9 +47,31 @@ const ArtistPage = () => {
         fetchArtists();
     }, []);
 
+    const toggleSubscribe = async (e, artist) => {
+        e.stopPropagation();
+        const token = localStorage.getItem('token');
+        try {
+            if (artist.isSubscribed) {
+                await axios.delete(`${apiUrl}/api/subscriptions/${artist.id}?userId=${userId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+            } else {
+                await axios.post(`${apiUrl}/api/subscriptions?userId=${userId}`, {
+                    targetId: artist.id,
+                    targetType: "artist"
+                }, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+            }
+            fetchSubscriptionStatus(artists);
+        } catch (err) {
+            console.error("Subscription error:", err);
+            alert("Failed to update subscription.");
+        }
+    };
+
     return (
         <div className="page-container">
-            <NavBar />
             <div className="content-wrap">
                 <div className="page-header">
                     <h1>Artists</h1>
@@ -65,8 +99,14 @@ const ArtistPage = () => {
                                 <h3>{artist.name}</h3>
                                 <p>{artist.genres && artist.genres.length > 0 ? artist.genres.join(', ') : 'N/A'}</p>
                             </div>
-                            {userIsAdmin && (
-                                <div className="card-actions">
+                            <div className="card-actions">
+                                <button
+                                    className={`btn-subscribe ${artist.isSubscribed ? 'subscribed' : ''}`}
+                                    onClick={(e) => toggleSubscribe(e, artist)}
+                                >
+                                    {artist.isSubscribed ? 'Subscribed' : 'Subscribe'}
+                                </button>
+                                {userIsAdmin && (
                                     <button
                                         className="btn-edit"
                                         onClick={(e) => {
@@ -76,8 +116,8 @@ const ArtistPage = () => {
                                     >
                                         Edit
                                     </button>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
                     ))}
                     {!loading && artists.length === 0 && <p>No artists found.</p>}

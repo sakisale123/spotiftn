@@ -23,7 +23,12 @@ type ContentRepository interface {
 	GetAlbumsByArtist(ctx context.Context, artistID string) ([]*models.Album, error)
 
 	CreateSong(ctx context.Context, song *models.Song) (*models.Song, error)
+	GetSongByID(ctx context.Context, id string) (*models.Song, error)
 	GetSongsByAlbumID(ctx context.Context, albumID string) ([]*models.Song, error)
+
+	SearchArtists(ctx context.Context, query string, genres []string) ([]*models.Artist, error)
+	SearchAlbums(ctx context.Context, query string) ([]*models.Album, error)
+	SearchSongs(ctx context.Context, query string) ([]*models.Song, error)
 }
 
 type MongoContentRepository struct {
@@ -169,6 +174,24 @@ func (r *MongoContentRepository) CreateSong(ctx context.Context, song *models.So
 	return song, nil
 }
 
+func (r *MongoContentRepository) GetSongByID(ctx context.Context, id string) (*models.Song, error) {
+	collection := r.Client.Database(r.Database).Collection("songs")
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	var song models.Song
+	err = collection.FindOne(ctx, bson.M{"_id": objID}).Decode(&song)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, errors.New("song not found")
+		}
+		return nil, err
+	}
+	return &song, nil
+}
+
 func (r *MongoContentRepository) GetSongsByAlbumID(ctx context.Context, albumID string) ([]*models.Song, error) {
 	collection := r.Client.Database(r.Database).Collection("songs")
 	objID, err := primitive.ObjectIDFromHex(albumID)
@@ -183,6 +206,72 @@ func (r *MongoContentRepository) GetSongsByAlbumID(ctx context.Context, albumID 
 	defer cursor.Close(ctx)
 
 	songs := []*models.Song{}
+	if err := cursor.All(ctx, &songs); err != nil {
+		return nil, err
+	}
+	return songs, nil
+}
+
+func (r *MongoContentRepository) SearchArtists(ctx context.Context, query string, genres []string) ([]*models.Artist, error) {
+	collection := r.Client.Database(r.Database).Collection("artists")
+
+	filter := bson.M{}
+	if query != "" {
+		filter["name"] = bson.M{"$regex": query, "$options": "i"}
+	}
+	if len(genres) > 0 {
+		filter["genres"] = bson.M{"$in": genres}
+	}
+
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var artists []*models.Artist
+	if err := cursor.All(ctx, &artists); err != nil {
+		return nil, err
+	}
+	return artists, nil
+}
+
+func (r *MongoContentRepository) SearchAlbums(ctx context.Context, query string) ([]*models.Album, error) {
+	collection := r.Client.Database(r.Database).Collection("albums")
+
+	filter := bson.M{}
+	if query != "" {
+		filter["title"] = bson.M{"$regex": query, "$options": "i"}
+	}
+
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var albums []*models.Album
+	if err := cursor.All(ctx, &albums); err != nil {
+		return nil, err
+	}
+	return albums, nil
+}
+
+func (r *MongoContentRepository) SearchSongs(ctx context.Context, query string) ([]*models.Song, error) {
+	collection := r.Client.Database(r.Database).Collection("songs")
+
+	filter := bson.M{}
+	if query != "" {
+		filter["title"] = bson.M{"$regex": query, "$options": "i"}
+	}
+
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var songs []*models.Song
 	if err := cursor.All(ctx, &songs); err != nil {
 		return nil, err
 	}

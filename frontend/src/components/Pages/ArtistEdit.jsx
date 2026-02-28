@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
-import NavBar from '../NavBar/NavBar';
+import { isAdmin } from '../../utils/auth';
 import './Pages.css';
 
 const ArtistEdit = () => {
@@ -111,7 +111,6 @@ const ArtistEdit = () => {
     if (loading) {
         return (
             <div className="page-container">
-                <NavBar />
                 <div className="content-wrap">
                     <p>Loading artist data...</p>
                 </div>
@@ -121,7 +120,6 @@ const ArtistEdit = () => {
 
     return (
         <div className="page-container">
-            <NavBar />
             <div className="content-wrap">
                 <div className="form-container">
                     <h1>Edit Artist</h1>

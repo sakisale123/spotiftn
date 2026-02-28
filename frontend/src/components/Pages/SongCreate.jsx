@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
-import NavBar from '../NavBar/NavBar';
+import { isAdmin } from '../../utils/auth';
 import './Pages.css';
 
 const SongCreate = () => {
-    const { albumId } = useParams(); 
+    const { albumId } = useParams();
     const [formData, setFormData] = useState({
         title: '',
         duration: '',
@@ -28,12 +28,10 @@ const SongCreate = () => {
                 const token = localStorage.getItem('token');
                 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
-
                 const artistsResponse = await axios.get(`${apiUrl}/api/content/artists`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 setArtists(artistsResponse.data || []);
-
 
                 const albumsData = [];
                 for (const artist of artistsResponse.data || []) {
@@ -49,7 +47,6 @@ const SongCreate = () => {
                         console.error(`Error fetching albums for artist ${artist.id}:`, err);
                     }
                 }
-
 
                 const uniqueAlbums = Array.from(
                     new Map(albumsData.map(album => [album.id, album])).values()
@@ -87,7 +84,6 @@ const SongCreate = () => {
         setError('');
         setSuccess('');
 
-
         if (!formData.title.trim()) {
             setError('Song title is required');
             return;
@@ -121,7 +117,7 @@ const SongCreate = () => {
                 genre: formData.genre.trim(),
                 album_id: formData.album_id,
                 artist_ids: selectedArtists,
-                audio_url: '' 
+                audio_url: ''
             };
 
             await axios.post(`${apiUrl}/api/content/songs`, payload, {
@@ -146,7 +142,6 @@ const SongCreate = () => {
     if (loadingData) {
         return (
             <div className="page-container">
-                <NavBar />
                 <div className="content-wrap">
                     <p>Loading...</p>
                 </div>
@@ -156,7 +151,6 @@ const SongCreate = () => {
 
     return (
         <div className="page-container">
-            <NavBar />
             <div className="content-wrap">
                 <div className="form-container">
                     <h1>Create New Song</h1>

@@ -3,8 +3,10 @@ package handlers
 import (
 	"context"
 	"net/http"
+	"os"
 	"time"
 
+	"spotiftn/subscriptions/client"
 	"spotiftn/subscriptions/db"
 	"spotiftn/subscriptions/models"
 
@@ -14,9 +16,21 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+var contentClient *client.ContentClient
+
+func init() {
+	contentURL := os.Getenv("CONTENT_SERVICE_URL")
+	if contentURL == "" {
+		contentURL = "https://content:8082" // Default internal address for content
+	}
+	contentClient = client.NewContentClient(contentURL)
+}
+
 func Subscribe(c *gin.Context) {
-	// userID := c.GetString("userId")
-	userID := "mocked-user-id"
+	userID := c.Query("userId")
+	if userID == "" {
+		userID = "mocked-user-id"
+	}
 
 	var req struct {
 		TargetID   string `json:"targetId" binding:"required"`
@@ -28,7 +42,19 @@ func Subscribe(c *gin.Context) {
 		return
 	}
 
-	// TODO: Member 3 Check - Sync HTTP call to check if artist or genre exists
+	// 2.5 Sinhrona komunikacija između servisa - provera u Content
+	if req.TargetType == "artist" {
+		exists, err := contentClient.CheckArtistExists(req.TargetID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to verify artist existence", "details": err.Error()})
+			return
+		}
+
+		if !exists {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Artist not found in Content service"})
+			return
+		}
+	}
 
 	collection := db.Database.Collection("subscription")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -68,8 +94,10 @@ func Subscribe(c *gin.Context) {
 }
 
 func Unsubscribe(c *gin.Context) {
-	// userID := c.GetString("userId")
-	userID := "mocked-user-id"
+	userID := c.Query("userId")
+	if userID == "" {
+		userID = "mocked-user-id"
+	}
 	targetID := c.Param("id")
 
 	collection := db.Database.Collection("subscription")
@@ -93,4 +121,30 @@ func Unsubscribe(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Unsubscribed successfully"})
+}
+
+func GetSubscriptionStatus(c *gin.Context) {
+	targetID := c.Query("targetId")
+	userID := c.Query("userId")
+
+	if userID == "" {
+		userID = "mocked-user-id"
+	}
+
+	collection := db.Database.Collection("subscription")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var sub models.Subscription
+	err := collection.FindOne(ctx, bson.M{"user_id": userID, "target_id": targetID}).Decode(&sub)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			c.JSON(http.StatusOK, gin.H{"isSubscribed": false})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check status"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"isSubscribed": true, "subscriptionId": sub.ID.Hex()})
 }

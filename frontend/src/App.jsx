@@ -14,6 +14,9 @@ import SongPage from './components/Pages/SongPage';
 import SongCreate from './components/Pages/SongCreate';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import BottomPlayer from './components/Footer/BottomPlayer';
+import { SearchProvider } from './context/SearchContext';
+import MainContent from './components/Pages/MainContent';
+import NavBar from './components/NavBar/NavBar';
 import './App.css';
 
 const ConditionalFooter = () => {
@@ -28,33 +31,41 @@ const ConditionalFooter = () => {
 
 function App() {
   return (
-    <Router>
-      <div className="App">
-        <Routes>
-          <Route path="/register" element={<RegisterPage />} />
+    <SearchProvider>
+      <Router>
+        <div className="App">
+          <Routes>
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/activate" element={<ActivationPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/" element={<LoginPage />} />
 
-          <Route path="/login" element={<LoginPage />} />
-
-          <Route path="/activate" element={<ActivationPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-
-          <Route path="/" element={<LoginPage />} />
-
-          <Route element={<ProtectedRoute />}>
-            <Route path="/artists" element={<ArtistPage />} />
-            <Route path="/artists/create" element={<ArtistCreate />} />
-            <Route path="/artists/:id/edit" element={<ArtistEdit />} />
-            <Route path="/artists/:artistId/albums" element={<AlbumPage />} />
-            <Route path="/albums/create/:artistId" element={<AlbumCreate />} />
-            <Route path="/albums/:albumId/songs" element={<SongPage />} />
-            <Route path="/songs/create/:albumId" element={<SongCreate />} />
-            <Route path="/change-password" element={<ChangePasswordPage />} />
-          </Route>
-        </Routes>
-        <ConditionalFooter />
-      </div>
-    </Router>
+            <Route element={<ProtectedRoute />}>
+              <Route path="*" element={
+                <>
+                  <NavBar />
+                  <MainContent>
+                    <Routes>
+                      <Route path="/artists" element={<ArtistPage />} />
+                      <Route path="/artists/create" element={<ArtistCreate />} />
+                      <Route path="/artists/:id/edit" element={<ArtistEdit />} />
+                      <Route path="/artists/:artistId/albums" element={<AlbumPage />} />
+                      <Route path="/albums/create/:artistId" element={<AlbumCreate />} />
+                      <Route path="/albums/:albumId/songs" element={<SongPage />} />
+                      <Route path="/songs/create/:albumId" element={<SongCreate />} />
+                      <Route path="/change-password" element={<ChangePasswordPage />} />
+                    </Routes>
+                  </MainContent>
+                </>
+              } />
+            </Route>
+          </Routes>
+          <ConditionalFooter />
+        </div>
+      </Router>
+    </SearchProvider>
   );
 }
 

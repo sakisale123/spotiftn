@@ -14,13 +14,10 @@ func SetupRouter() *gin.Engine {
 		c.JSON(200, gin.H{"status": "OK", "service": "ratings"})
 	})
 
-	api := r.Group("/")
-	// api.Use(middleware.AuthMiddleware()) // TODO: implement and test Auth middleware later
-	{
-		api.POST("/", handlers.CreateRating)
-		api.PUT("/:id", handlers.UpdateRating)
-		api.DELETE("/:id", handlers.DeleteRating)
-	}
+	r.POST("/", handlers.CreateRating)
+	r.PUT("/:id", handlers.UpdateRating)
+	r.DELETE("/:id", handlers.DeleteRating)
+	r.GET("/user/song/:songId", handlers.GetUserRating)
 
 	return r
 }

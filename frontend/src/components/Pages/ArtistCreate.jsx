@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import NavBar from '../NavBar/NavBar';
+import { isAdmin } from '../../utils/auth';
 import './Pages.css';
 
 const ArtistCreate = () => {
@@ -80,7 +80,6 @@ const ArtistCreate = () => {
 
     return (
         <div className="page-container">
-            <NavBar />
             <div className="content-wrap">
                 <div className="form-container">
                     <h1>Create New Artist</h1>

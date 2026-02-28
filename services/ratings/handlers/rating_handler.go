@@ -27,8 +27,11 @@ func init() {
 }
 
 func CreateRating(c *gin.Context) {
-	// userID := c.GetString("userId") // Mocking for now since we don't have middleware tested here yet
-	userID := "mocked-user-id"
+	// 1. Get User ID from query or body (to match frontend)
+	userID := c.Query("userId")
+	if userID == "" {
+		userID = "mocked-user-id"
+	}
 
 	var req struct {
 		SongID string `json:"songId" binding:"required"`
@@ -74,8 +77,10 @@ func CreateRating(c *gin.Context) {
 
 func UpdateRating(c *gin.Context) {
 	ratingID := c.Param("id")
-	// userID := c.GetString("userId")
-	userID := "mocked-user-id"
+	userID := c.Query("userId")
+	if userID == "" {
+		userID = "mocked-user-id"
+	}
 
 	objID, err := primitive.ObjectIDFromHex(ratingID)
 	if err != nil {
@@ -115,8 +120,10 @@ func UpdateRating(c *gin.Context) {
 
 func DeleteRating(c *gin.Context) {
 	ratingID := c.Param("id")
-	// userID := c.GetString("userId")
-	userID := "mocked-user-id"
+	userID := c.Query("userId")
+	if userID == "" {
+		userID = "mocked-user-id"
+	}
 
 	objID, err := primitive.ObjectIDFromHex(ratingID)
 	if err != nil {
@@ -146,4 +153,30 @@ func DeleteRating(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Rating deleted successfully"})
+}
+
+func GetUserRating(c *gin.Context) {
+	songID := c.Param("songId")
+	userID := c.Query("userId")
+
+	if userID == "" {
+		userID = "mocked-user-id"
+	}
+
+	collection := db.Database.Collection("ratings")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var rating models.Rating
+	err := collection.FindOne(ctx, bson.M{"song_id": songID, "user_id": userID}).Decode(&rating)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			c.JSON(http.StatusOK, gin.H{"score": 0})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch rating"})
+		return
+	}
+
+	c.JSON(http.StatusOK, rating)
 }

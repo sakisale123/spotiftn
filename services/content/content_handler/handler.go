@@ -200,3 +200,63 @@ func (h *ContentHandler) GetSongsByAlbumID(w http.ResponseWriter, r *http.Reques
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(songs)
 }
+
+func (h *ContentHandler) GetSongByID(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	song, err := h.Repo.GetSongByID(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, errors.New("song not found")) {
+			http.Error(w, "Song not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "Database error fetching song", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(song)
+}
+
+func (h *ContentHandler) Search(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query().Get("q")
+	types := r.URL.Query()["type"]
+	genres := r.URL.Query()["genre"]
+
+	// If no types specified, search all
+	if len(types) == 0 {
+		types = []string{"artist", "album", "song"}
+	}
+
+	results := make(map[string]interface{})
+
+	for _, t := range types {
+		switch t {
+		case "artist":
+			artists, err := h.Repo.SearchArtists(r.Context(), query, genres)
+			if err != nil {
+				http.Error(w, "Error searching artists", http.StatusInternalServerError)
+				return
+			}
+			results["artists"] = artists
+		case "album":
+			albums, err := h.Repo.SearchAlbums(r.Context(), query)
+			if err != nil {
+				http.Error(w, "Error searching albums", http.StatusInternalServerError)
+				return
+			}
+			results["albums"] = albums
+		case "song":
+			songs, err := h.Repo.SearchSongs(r.Context(), query)
+			if err != nil {
+				http.Error(w, "Error searching songs", http.StatusInternalServerError)
+				return
+			}
+			results["songs"] = songs
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(results)
+}

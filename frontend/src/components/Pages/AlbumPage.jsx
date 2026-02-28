@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
-import NavBar from '../NavBar/NavBar';
 import { isAdmin } from '../../utils/auth';
 import './Pages.css';
 
@@ -38,7 +37,6 @@ const AlbumPage = () => {
 
     return (
         <div className="page-container">
-            <NavBar />
             <div className="content-wrap">
                 <button onClick={() => navigate(-1)} className="back-btn">← Back to Artists</button>
                 <div className="page-header">
