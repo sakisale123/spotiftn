@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import StarRating from './StarRating';
 import { isAdmin, getUserId } from '../../utils/auth';
+import { usePlayer } from '../../context/PlayerContext';
 import './Pages.css';
 
 const SongPage = () => {
@@ -13,6 +14,7 @@ const SongPage = () => {
     const [error, setError] = useState('');
     const userIsAdmin = isAdmin();
     const userId = getUserId();
+    const { playSong, currentSong, isPlaying } = usePlayer();
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
     const fetchSongRatings = async (songList) => {
@@ -107,7 +109,12 @@ const SongPage = () => {
                                     onRate={(score) => handleRate(song.id, score, song.ratingId)}
                                 />
                                 <span className="song-duration">{formatDuration(song.duration)}</span>
-                                <button className="play-btn">▶</button>
+                                <button
+                                    className={`play-btn ${currentSong?.id === song.id && isPlaying ? 'playing' : ''}`}
+                                    onClick={() => playSong(song)}
+                                >
+                                    {currentSong?.id === song.id && isPlaying ? '⏸' : '▶'}
+                                </button>
                             </div>
                         </div>
                     ))}

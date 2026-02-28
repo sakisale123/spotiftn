@@ -29,6 +29,7 @@ func SetupRoutes(handler *content_handler.ContentHandler) *mux.Router {
 	router.HandleFunc("/albums/{id}", handler.GetAlbumByID).Methods("GET")
 	router.HandleFunc("/albums/{id}/songs", handler.GetSongsByAlbumID).Methods("GET")
 	router.HandleFunc("/songs/{id}", handler.GetSongByID).Methods("GET")
+	router.HandleFunc("/songs/{id}/stream", handler.StreamSong).Methods("GET")
 	router.HandleFunc("/search", handler.Search).Methods("GET")
 
 	return router

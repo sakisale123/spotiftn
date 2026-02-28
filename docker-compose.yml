@@ -262,6 +262,35 @@ services:
     networks:
       - app-network
 
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop2.7.4-java8
+    container_name: namenode
+    volumes:
+      - hadoop_namenode:/hadoop/dfs/name
+    environment:
+      - CLUSTER_NAME=test
+    env_file:
+      - ./hadoop.env
+    ports:
+      - "50070:50070"
+      - "9000:9000"
+    networks:
+      - app-network
+
+  datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop2.7.4-java8
+    container_name: datanode
+    volumes:
+      - hadoop_datanode:/hadoop/dfs/data
+    environment:
+      - SERVICE_PRECONDITION=namenode:50070
+    env_file:
+      - ./hadoop.env
+    depends_on:
+      - namenode
+    networks:
+      - app-network
+
 networks:
   app-network:
     driver: bridge
@@ -271,3 +300,5 @@ volumes:
   mongo_content_data:
   mongo_ratings_data:
   mongo_subscriptions_data:
+  hadoop_namenode:
+  hadoop_datanode:

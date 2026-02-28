@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import NavBar from '../NavBar/NavBar';
 import { getUserId } from '../../utils/auth';
 import './Auth.css';
 
@@ -62,7 +61,6 @@ const ChangePasswordPage = () => {
 
     return (
         <div className="page-container">
-            <NavBar />
             <div className="auth-container">
                 <div className="auth-box">
                     <h2>Promena Lozinke</h2>

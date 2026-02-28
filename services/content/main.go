@@ -23,6 +23,7 @@ func main() {
 
 	dbName := GetDatabaseName()
 	contentRepo := repository.NewMongoContentRepository(mongoClient, dbName)
+
 	contentHandler := content_handler.NewContentHandler(contentRepo)
 	router := SetupRoutes(contentHandler)
 

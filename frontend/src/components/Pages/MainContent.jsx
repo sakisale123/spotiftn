@@ -1,7 +1,6 @@
 import React from 'react';
 import { useSearch } from '../../context/SearchContext';
 import { useNavigate } from 'react-router-dom';
-import NavBar from '../NavBar/NavBar';
 import './Pages.css';
 
 const MainContent = ({ children }) => {

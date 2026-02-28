@@ -3,13 +3,23 @@ package content_handler
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
+	"os"
+	"sync"
+	"time"
 
 	"spotiftn/content/models"
 	"spotiftn/content/repository"
 
+	"github.com/colinmarc/hdfs/v2"
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+)
+
+var (
+	hdfsClient *hdfs.Client
+	hdfsOnce   sync.Once
 )
 
 type ContentHandler struct {
@@ -20,6 +30,31 @@ func NewContentHandler(repo repository.ContentRepository) *ContentHandler {
 	return &ContentHandler{
 		Repo: repo,
 	}
+}
+
+func (h *ContentHandler) getHdfsClient() (*hdfs.Client, error) {
+	var err error
+	hdfsOnce.Do(func() {
+		hdfsAddr := os.Getenv("HDFS_NAMENODE_ADDR")
+		if hdfsAddr == "" {
+			hdfsAddr = "namenode:9000"
+		}
+		hdfsClient, err = hdfs.New(hdfsAddr)
+		if err == nil {
+			log.Println("HDFS client initialized successfully")
+		}
+	})
+
+	if hdfsClient == nil && err == nil {
+		// This happens if the first call failed, we should allow retrying
+		hdfsAddr := os.Getenv("HDFS_NAMENODE_ADDR")
+		if hdfsAddr == "" {
+			hdfsAddr = "namenode:9000"
+		}
+		hdfsClient, err = hdfs.New(hdfsAddr)
+	}
+
+	return hdfsClient, err
 }
 
 func (h *ContentHandler) CreateArtist(w http.ResponseWriter, r *http.Request) {
@@ -222,7 +257,23 @@ func (h *ContentHandler) GetSongByID(w http.ResponseWriter, r *http.Request) {
 func (h *ContentHandler) Search(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query().Get("q")
 	types := r.URL.Query()["type"]
+	// Clean up empty strings from query parameters
+	var cleanTypes []string
+	for _, t := range types {
+		if t != "" {
+			cleanTypes = append(cleanTypes, t)
+		}
+	}
+	types = cleanTypes
+
 	genres := r.URL.Query()["genre"]
+	var cleanGenres []string
+	for _, g := range genres {
+		if g != "" {
+			cleanGenres = append(cleanGenres, g)
+		}
+	}
+	genres = cleanGenres
 
 	// If no types specified, search all
 	if len(types) == 0 {
@@ -241,14 +292,14 @@ func (h *ContentHandler) Search(w http.ResponseWriter, r *http.Request) {
 			}
 			results["artists"] = artists
 		case "album":
-			albums, err := h.Repo.SearchAlbums(r.Context(), query)
+			albums, err := h.Repo.SearchAlbums(r.Context(), query, genres)
 			if err != nil {
 				http.Error(w, "Error searching albums", http.StatusInternalServerError)
 				return
 			}
 			results["albums"] = albums
 		case "song":
-			songs, err := h.Repo.SearchSongs(r.Context(), query)
+			songs, err := h.Repo.SearchSongs(r.Context(), query, genres)
 			if err != nil {
 				http.Error(w, "Error searching songs", http.StatusInternalServerError)
 				return
@@ -259,4 +310,39 @@ func (h *ContentHandler) Search(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(results)
+}
+
+func (h *ContentHandler) StreamSong(w http.ResponseWriter, r *http.Request) {
+	client, err := h.getHdfsClient()
+	if err != nil {
+		log.Printf("HDFS client error: %v", err)
+		http.Error(w, "HDFS client is not initialized or failed to connect", http.StatusInternalServerError)
+		return
+	}
+
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	song, err := h.Repo.GetSongByID(r.Context(), id)
+	if err != nil {
+		http.Error(w, "Song not found", http.StatusNotFound)
+		return
+	}
+
+	if song.AudioURL == "" {
+		http.Error(w, "Song has no audio URL", http.StatusNotFound)
+		return
+	}
+
+	file, err := client.Open(song.AudioURL)
+	if err != nil {
+		log.Printf("Error opening HDFS file %s: %v", song.AudioURL, err)
+		http.Error(w, "Failed to open audio file from HDFS", http.StatusInternalServerError)
+		return
+	}
+	defer file.Close()
+
+	w.Header().Set("Content-Type", "audio/mpeg")
+	// Support range requests for seeking
+	http.ServeContent(w, r, song.Title+".mp3", time.Time{}, file)
 }

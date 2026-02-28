@@ -27,8 +27,8 @@ type ContentRepository interface {
 	GetSongsByAlbumID(ctx context.Context, albumID string) ([]*models.Song, error)
 
 	SearchArtists(ctx context.Context, query string, genres []string) ([]*models.Artist, error)
-	SearchAlbums(ctx context.Context, query string) ([]*models.Album, error)
-	SearchSongs(ctx context.Context, query string) ([]*models.Song, error)
+	SearchAlbums(ctx context.Context, query string, genres []string) ([]*models.Album, error)
+	SearchSongs(ctx context.Context, query string, genres []string) ([]*models.Song, error)
 }
 
 type MongoContentRepository struct {
@@ -220,7 +220,11 @@ func (r *MongoContentRepository) SearchArtists(ctx context.Context, query string
 		filter["name"] = bson.M{"$regex": query, "$options": "i"}
 	}
 	if len(genres) > 0 {
-		filter["genres"] = bson.M{"$in": genres}
+		var genreFilters []bson.M
+		for _, g := range genres {
+			genreFilters = append(genreFilters, bson.M{"genres": bson.M{"$regex": "^" + g + "$", "$options": "i"}})
+		}
+		filter["$or"] = genreFilters
 	}
 
 	cursor, err := collection.Find(ctx, filter)
@@ -236,12 +240,19 @@ func (r *MongoContentRepository) SearchArtists(ctx context.Context, query string
 	return artists, nil
 }
 
-func (r *MongoContentRepository) SearchAlbums(ctx context.Context, query string) ([]*models.Album, error) {
+func (r *MongoContentRepository) SearchAlbums(ctx context.Context, query string, genres []string) ([]*models.Album, error) {
 	collection := r.Client.Database(r.Database).Collection("albums")
 
 	filter := bson.M{}
 	if query != "" {
 		filter["title"] = bson.M{"$regex": query, "$options": "i"}
+	}
+	if len(genres) > 0 {
+		var genreFilters []bson.M
+		for _, g := range genres {
+			genreFilters = append(genreFilters, bson.M{"genre": bson.M{"$regex": "^" + g + "$", "$options": "i"}})
+		}
+		filter["$or"] = genreFilters
 	}
 
 	cursor, err := collection.Find(ctx, filter)
@@ -257,12 +268,19 @@ func (r *MongoContentRepository) SearchAlbums(ctx context.Context, query string)
 	return albums, nil
 }
 
-func (r *MongoContentRepository) SearchSongs(ctx context.Context, query string) ([]*models.Song, error) {
+func (r *MongoContentRepository) SearchSongs(ctx context.Context, query string, genres []string) ([]*models.Song, error) {
 	collection := r.Client.Database(r.Database).Collection("songs")
 
 	filter := bson.M{}
 	if query != "" {
 		filter["title"] = bson.M{"$regex": query, "$options": "i"}
+	}
+	if len(genres) > 0 {
+		var genreFilters []bson.M
+		for _, g := range genres {
+			genreFilters = append(genreFilters, bson.M{"genre": bson.M{"$regex": "^" + g + "$", "$options": "i"}})
+		}
+		filter["$or"] = genreFilters
 	}
 
 	cursor, err := collection.Find(ctx, filter)
